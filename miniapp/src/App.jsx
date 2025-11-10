@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import StartScreen from "./components/StartScreen";
 import MenuBar, { MENU_ITEMS } from "./components/MenuBar";
@@ -7,6 +7,7 @@ import ServicesScreen from "./components/screens/ServicesScreen";
 import NewsScreen from "./components/screens/NewsScreen";
 import ProjectsScreen from "./components/screens/ProjectsScreen";
 import AccountScreen from "./components/screens/AccountScreen";
+import useSwipeNavigation from "./hooks/useSwipeNavigation";
 import "./styles/main.scss";
 
 const SCREEN_COMPONENTS = {
@@ -47,11 +48,6 @@ const App = () => {
   const [isStarted, setIsStarted] = useState(false);
   const [activeScreen, setActiveScreen] = useState(MENU_ITEMS[0].key);
   const [direction, setDirection] = useState(0);
-  const swipeSessionRef = useRef({
-    pointerId: null,
-    startX: 0,
-    startY: 0,
-  });
 
   const ActiveScreen = SCREEN_COMPONENTS[activeScreen] ?? ScheduleScreen;
   const activeIndex = Math.max(SCREEN_KEYS.indexOf(activeScreen), 0);
@@ -89,67 +85,11 @@ const App = () => {
     [activeIndex],
   );
 
-  const handlePointerDown = useCallback((event) => {
-    if (
-      swipeSessionRef.current.pointerId !== null ||
-      (event.pointerType === "mouse" && event.button !== 0)
-    ) {
-      return;
-    }
-
-    swipeSessionRef.current.pointerId = event.pointerId;
-    swipeSessionRef.current.startX = event.clientX;
-    swipeSessionRef.current.startY = event.clientY;
-  }, []);
-
-  const clearSwipeSession = useCallback(() => {
-    swipeSessionRef.current.pointerId = null;
-    swipeSessionRef.current.startX = 0;
-    swipeSessionRef.current.startY = 0;
-  }, []);
-
-  const handleSwipeEnd = useCallback(
-    (event) => {
-      if (swipeSessionRef.current.pointerId !== event.pointerId) {
-        return;
-      }
-
-      const deltaX = event.clientX - swipeSessionRef.current.startX;
-      const deltaY = event.clientY - swipeSessionRef.current.startY;
-
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > SWIPE_THRESHOLD) {
-        goToNeighbor(deltaX < 0 ? 1 : -1);
-      }
-
-      clearSwipeSession();
-    },
-    [clearSwipeSession, goToNeighbor],
-  );
-
-  const handleSwipeCancel = useCallback(
-    (event) => {
-      if (swipeSessionRef.current.pointerId !== event.pointerId) {
-        return;
-      }
-
-      clearSwipeSession();
-    },
-    [clearSwipeSession],
-  );
-
-  useEffect(() => {
-    if (!isStarted || typeof window === "undefined") {
-      return undefined;
-    }
-
-    window.addEventListener("pointerup", handleSwipeEnd);
-    window.addEventListener("pointercancel", handleSwipeCancel);
-
-    return () => {
-      window.removeEventListener("pointerup", handleSwipeEnd);
-      window.removeEventListener("pointercancel", handleSwipeCancel);
-    };
-  }, [handleSwipeCancel, handleSwipeEnd, isStarted]);
+  const swipeHandlers = useSwipeNavigation({
+    enabled: isStarted,
+    threshold: SWIPE_THRESHOLD,
+    onSwipe: goToNeighbor,
+  });
 
   if (!isStarted) {
     return <StartScreen onContinue={() => setIsStarted(true)} />;
@@ -159,7 +99,7 @@ const App = () => {
     <div className="app-shell">
       <main
         className="app-shell__content"
-        onPointerDown={handlePointerDown}
+        {...swipeHandlers}
       >
         <div className="screen-stack">
           <AnimatePresence initial={false} custom={direction} mode="sync">

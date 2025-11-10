@@ -25,6 +25,7 @@
   height: var(--screen-height);
   min-height: var(--screen-height);
   overflow: hidden;
+  touch-action: pan-y;
 }
 
 .screen-stack__item {
