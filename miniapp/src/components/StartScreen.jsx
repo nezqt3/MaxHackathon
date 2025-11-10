@@ -2,7 +2,7 @@ import Logo from "../static/nomissedaim.svg";
 import { motion } from "motion/react";
 import { screenFade, logoRotation, buttonAnim } from "../../src/animations/StartScreenAnim.jsx";
 
-export default function StartScreen() {
+export default function StartScreen({ onContinue = () => {} }) {
   return (
     <motion.div {...screenFade} className="start-screen">
       <div className="start-screen__logo-div">
@@ -22,6 +22,8 @@ export default function StartScreen() {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         className="start-screen__button"
+        onClick={onContinue}
+        type="button"
       >
         Продолжить
       </motion.button>
