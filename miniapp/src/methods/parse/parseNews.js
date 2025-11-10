@@ -19,3 +19,5 @@ const getNews = async () => {
 };
 
 const res = await getNews();
+
+console.log(res)
