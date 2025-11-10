@@ -1,0 +1,64 @@
+@import "./variables";
+
+@media (max-width: 500px) {
+  .start-screen {
+    padding: 0 20px;
+
+    &__logo-div {
+      width: 134px;
+      height: 134px;
+      background-color: white;
+      border-radius: 50%;
+      padding: 12px 6px;
+      margin: 70% auto 40px auto;
+      align-items: center;
+      box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.16);
+      text-align: center;
+    }
+
+    &__logo {
+      stroke: $blue-color;
+      rotate: 23deg;
+      width: 110px;
+    }
+
+    &__title {
+      font-family: "Raleway";
+      font-style: normal;
+      font-weight: 700;
+      font-size: 52px;
+      line-height: 61px;
+      text-align: center;
+      letter-spacing: -0.52px;
+      margin: 0 auto;
+      margin-bottom: 2px;
+      color: $black-color;
+    }
+
+    &__text {
+      font-style: normal;
+      font-weight: 300;
+      font-size: 19px;
+      line-height: 33px;
+      text-align: center;
+      margin: 0 auto;
+      color: $black-color;
+      margin-bottom: 106px;
+    }
+
+    &__button {
+      margin: 0 auto;
+      width: 100%;
+      font-size: 22px;
+      line-height: 31px;
+      letter-spacing: 0px;
+      font-weight: 300;
+      outline: none;
+      border: none;
+      padding: 15px 0;
+      border-radius: 16px;
+      background-color: $blue-color;
+      color: $white-other-color;
+    }
+  }
+}

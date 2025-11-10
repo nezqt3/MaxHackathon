@@ -9,7 +9,7 @@ const getNews = async () => {
     const titles = [];
     let match;
     while ((match = regex.exec(html)) !== null) {
-      titles.push(match[1].replace(/<[^>]+>/g, "").trim()); // удаляем HTML внутри
+      titles.push(match[1].replace(/<[^>]+>/g, "").trim());
     }
 
     return titles;

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Crosshair -->
+  <g transform="translate(128,128)" stroke="#004cff" stroke-width="6" stroke-linecap="round" fill="none">
+    <!-- circles -->
+    <circle r="100"/>
+    <circle r="65"/>
+
+    <!-- vertical lines -->
+    <path d="M0,-120 L0,-40"/>
+    <path d="M0,40 L0,120"/>
+
+    <!-- horizontal lines -->
+    <path d="M-120,0 L-40,0"/>
+    <path d="M40,0 L120,0"/>
+  </g>
+</svg>
