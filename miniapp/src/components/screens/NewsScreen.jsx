@@ -35,9 +35,9 @@ export default function NewsScreen() {
         news.map((elem, index) => (
           <div key={index} className="news-card">
             <a
-              href={elem.url}
               target="_blank"
               rel="noopener noreferrer"
+              id={elem.url}
               className="news-card__title"
             >
               {elem.title}
