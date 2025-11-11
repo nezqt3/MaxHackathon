@@ -4,19 +4,6 @@ const SERVICE_STATUS_META = {
 
 const SERVICES = [
   {
-    id: "career",
-    title: "Карьера",
-    status: "planned",
-    accent: "#ec4899",
-    accentBg: "rgba(236, 72, 153, 0.12)",
-    accentBorder: "rgba(236, 72, 153, 0.3)",
-    description: "Совместно с центром развития собираем карьерный трек.",
-    features: [
-      "Получать консультации от центра карьеры",
-      "Просматривать и откликаться на вакансии",
-    ],
-  },
-  {
     id: "dean-office",
     title: "Деканат",
     status: "ready",
@@ -27,7 +14,6 @@ const SERVICES = [
     features: [
       "Получать справки",
       "Оплачивать обучение",
-      "Оформлять компенсации",
       "Подавать заявление на перевод или академический отпуск",
     ],
   },
@@ -42,8 +28,7 @@ const SERVICES = [
     features: [
       "Оплачивать проживание",
       "Заказывать дополнительные услуги",
-      "Оформлять пропуск для гостя",
-      "Подача заявок в техподдержку",
+      "Оформлять пропуск для гостя"
     ],
   },
   {
@@ -66,15 +51,28 @@ const SERVICES = [
     accent: "#f97316",
     accentBg: "rgba(249, 115, 22, 0.12)",
     accentBorder: "rgba(249, 115, 22, 0.3)",
-    description: "Подключаем печатные и цифровые фонды.",
     features: ["Заказывать книги", "Получать доступ к электронной библиотеке"],
   },
+    {
+    id: "career",
+    title: "Карьера",
+    status: "planned",
+    accent: "#ec4899",
+    accentBg: "rgba(236, 72, 153, 0.12)",
+    accentBorder: "rgba(236, 72, 153, 0.3)",
+    description: "Совместно с центром развития собираем карьерный трек.",
+    features: [
+      "Получать консультации от центра карьеры",
+      "Просматривать и откликаться на вакансии",
+    ],
+  }
 ];
 
 const ServicesScreen = () => (
   <section className="screen services-screen">
     <div className="services-screen__header">
       <h2 className="screen__title">Сервисы кампуса</h2>
+      <p className="screen__subtitle">Различные решения для вашего удобства</p>
     </div>
 
     <div className="services-grid">
