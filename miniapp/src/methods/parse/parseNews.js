@@ -2,9 +2,8 @@
 
 export const getNews = async () => {
   try {
-    const response = await fetch("http://localhost:4000/api/news");
-    const data = await response.json();
-    const html = data.html;
+    const response = await fetch("https://www.fa.ru/university/press-center/");
+    const html = await response.text();
 
     const regex =
       /<a[^>]*class="news-card__link"[^>]*href="([^"]+)"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"[^>]*>[\s\S]*?<h[1-9][^>]*class="news-card__title"[^>]*>([\s\S]*?)<\/h[1-9]>/g;
