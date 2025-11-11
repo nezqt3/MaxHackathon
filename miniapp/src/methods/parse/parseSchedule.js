@@ -1,4 +1,4 @@
-const joinByStartTime = (data) => {
+export const joinByStartTime = (data) => {
   const grouped = Object.values(
     data.reduce((acc, item) => {
       const key = item.beginLesson;
@@ -9,6 +9,7 @@ const joinByStartTime = (data) => {
           endLesson: item.endLesson,
           dayOfWeek: item.dayOfWeek,
           dayOfWeekString: item.dayOfWeekString,
+          date: item.date,
           auditoriums: [],
           disciplines: [],
           kindOfWorks: [],
@@ -50,7 +51,7 @@ const joinByStartTime = (data) => {
 
 // Поиск расписания по ключу из текст инпута
 
-const parseIdSchedule = async (string) => {
+export const parseIdSchedule = async (string) => {
   try {
     const response = await fetch(`https://ruz.fa.ru/api/search?term=${string}`);
 
@@ -70,7 +71,7 @@ const parseIdSchedule = async (string) => {
 
 // Поиск необходимого расписания
 
-const parseSchedule = async (id, type, startTime, endTime) => {
+export const parseSchedule = async (id, type, startTime, endTime) => {
   try {
     const response = await fetch(
       `https://ruz.fa.ru/api/schedule/${type}/${id}?start=${startTime}&finish=${endTime}&lng=1`
@@ -94,20 +95,10 @@ const parseSchedule = async (id, type, startTime, endTime) => {
       url1_description: item.url1_description,
       url2: item.url2,
       url2_description: item.url2_description,
+      date: item.date,
     }));
     return joinByStartTime(neededData);
   } catch (e) {
     return e;
   }
 };
-
-const response = await parseIdSchedule("ТРПО25-2");
-
-const schedule = await parseSchedule(
-  response[0].id,
-  response[0].type,
-  "2025-11-12",
-  "2025-11-12"
-);
-
-console.log(schedule);
