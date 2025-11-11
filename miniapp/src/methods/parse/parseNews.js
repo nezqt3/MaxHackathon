@@ -5,19 +5,55 @@ const getNews = async () => {
     const response = await fetch("https://www.fa.ru/university/press-center/");
     const html = await response.text();
 
-    const regex = /<h[1-9] class="news-card__title">([\s\S]*?)<\/h[1-9]>/g;
-    const titles = [];
+    const regex =
+      /<a[^>]*class="news-card__link"[^>]*href="([^"]+)"[^>]*>[\s\S]*?<h[1-9][^>]*class="news-card__title"[^>]*>([\s\S]*?)<\/h[1-9]>/g;
+
+    const news = [];
     let match;
+
     while ((match = regex.exec(html)) !== null) {
-      titles.push(match[1].replace(/<[^>]+>/g, "").trim());
+      const href = match[1].startsWith("http")
+        ? match[1]
+        : `https://www.fa.ru${match[1]}`;
+      const title = match[2].replace(/<[^>]+>/g, "").trim();
+
+      news.push({ title, url: href });
     }
 
-    return titles;
+    return news;
   } catch (e) {
     return e;
   }
 };
 
+const getNewsContent = async (url) => {
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+
+    const regex =
+      /<section[^>]*class="app-section _is-slim _gutter-md"[^>]*>([\s\S]*?)<\/section>/i;
+
+    const match = html.match(regex);
+
+    if (!match) return null;
+
+    const sectionHtml = match[1];
+
+    const text = sectionHtml
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return text;
+  } catch (e) {
+    console.error("Ошибка при парсинге контента:", e);
+    return null;
+  }
+};
+
 const res = await getNews();
 
-console.log(res)
+const res2 = await getNewsContent(res[3].url);
+
+console.log(res2);
