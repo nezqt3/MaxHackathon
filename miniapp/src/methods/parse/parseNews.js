@@ -6,7 +6,7 @@ const getNews = async () => {
     const html = await response.text();
 
     const regex =
-      /<a[^>]*class="news-card__link"[^>]*href="([^"]+)"[^>]*>[\s\S]*?<h[1-9][^>]*class="news-card__title"[^>]*>([\s\S]*?)<\/h[1-9]>/g;
+      /<a[^>]*class="news-card__link"[^>]*href="([^"]+)"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"[^>]*>[\s\S]*?<h[1-9][^>]*class="news-card__title"[^>]*>([\s\S]*?)<\/h[1-9]>/g;
 
     const news = [];
     let match;
@@ -15,9 +15,12 @@ const getNews = async () => {
       const href = match[1].startsWith("http")
         ? match[1]
         : `https://www.fa.ru${match[1]}`;
-      const title = match[2].replace(/<[^>]+>/g, "").trim();
+      const img = match[2].startsWith("http")
+        ? match[2]
+        : `https://www.fa.ru${match[2]}`;
+      const title = match[3].replace(/<[^>]+>/g, "").trim();
 
-      news.push({ title, url: href });
+      news.push({ title, url: href, img });
     }
 
     return news;
@@ -55,5 +58,3 @@ const getNewsContent = async (url) => {
 const res = await getNews();
 
 const res2 = await getNewsContent(res[3].url);
-
-console.log(res2);
