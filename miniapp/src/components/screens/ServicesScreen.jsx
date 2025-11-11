@@ -1,5 +1,17 @@
-const SERVICE_STATUS_META = {
-  planned: { label: "Скоро", tone: "pending", icon: "?" },
+import { useState } from "react";
+import ActivitiesService from "../services/ActivitiesService";
+import CareerService from "../services/CareerService";
+import DeanOfficeService from "../services/DeanOfficeService";
+import DormService from "../services/DormService";
+import LibraryService from "../services/LibraryService";
+
+
+const SERVICE_COMPONENTS = {
+  "dean-office": DeanOfficeService,
+  dorm: DormService,
+  activities: ActivitiesService,
+  library: LibraryService,
+  career: CareerService,
 };
 
 const SERVICES = [
@@ -28,7 +40,7 @@ const SERVICES = [
     features: [
       "Оплачивать проживание",
       "Заказывать дополнительные услуги",
-      "Оформлять пропуск для гостя"
+      "Оформлять пропуск для гостя",
     ],
   },
   {
@@ -48,82 +60,162 @@ const SERVICES = [
     id: "library",
     title: "Библиотека",
     status: "planned",
+    disabled: true,
     accent: "#f97316",
     accentBg: "rgba(249, 115, 22, 0.12)",
     accentBorder: "rgba(249, 115, 22, 0.3)",
     features: ["Заказывать книги", "Получать доступ к электронной библиотеке"],
   },
-    {
+  {
     id: "career",
     title: "Карьера",
     status: "planned",
+    disabled: true,
     accent: "#ec4899",
     accentBg: "rgba(236, 72, 153, 0.12)",
     accentBorder: "rgba(236, 72, 153, 0.3)",
-    description: "Совместно с центром развития собираем карьерный трек.",
     features: [
       "Получать консультации от центра карьеры",
       "Просматривать и откликаться на вакансии",
     ],
-  }
+  },
 ];
 
-const ServicesScreen = () => (
-  <section className="screen services-screen">
-    <div className="services-screen__header">
-      <h2 className="screen__title">Сервисы кампуса</h2>
-      <p className="screen__subtitle">Различные решения для вашего удобства</p>
-    </div>
+const ServicesScreen = () => {
+  const [activeServiceId, setActiveServiceId] = useState(null);
 
-    <div className="services-grid">
-      {SERVICES.map((service) => {
-        const statusMeta = SERVICE_STATUS_META[service.status];
-        const initial = service.title?.[0]?.toUpperCase() ?? "";
+  const activeService = SERVICES.find(({ id }) => id === activeServiceId) ?? null;
+  const ActiveServiceComponent = activeService ? SERVICE_COMPONENTS[activeService.id] : null;
 
-        return (
-          <article
-            key={service.id}
-            className="services-card"
-            style={{
-              "--services-accent": service.accent,
-              "--services-accent-bg": service.accentBg,
-              "--services-accent-border": service.accentBorder,
-            }}
+  const handleOpenService = (serviceId) => setActiveServiceId(serviceId);
+  const handleCardKeyDown = (event, serviceId, isDisabled) => {
+    if (isDisabled) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleOpenService(serviceId);
+    }
+  };
+
+  return (
+    <section className={`screen services-screen${activeService ? " services-screen--detail" : ""}`}>
+      {activeService ? (
+        <div className="services-detail">
+          <button
+            type="button"
+            className="services-detail__back"
+            onClick={() => setActiveServiceId(null)}
           >
-            <div className="services-card__icon" aria-hidden="true">
-              {initial}
-            </div>
+            <span aria-hidden="true">←</span>
+            Назад к сервисам
+          </button>
 
-            <div className="services-card__content">
-              <div className="services-card__header">
-                <h3 className="services-card__title">{service.title}</h3>
-                {statusMeta && (
-                  <span className={`services-status services-status--${statusMeta.tone}`}>
-                    <span className="services-status__icon" aria-hidden="true">
-                      {statusMeta.icon}
-                    </span>
-                    {statusMeta.label}
-                  </span>
-                )}
-              </div>
+          <div className="services-detail__header">
+            <p className="services-screen__eyebrow">Сервис</p>
+            <h2 className="screen__title">{activeService.title}</h2>
+            {activeService.description && (
+              <p className="screen__subtitle">{activeService.description}</p>
+            )}
+          </div>
 
-              {service.description && (
-                <p className="services-card__description">{service.description}</p>
-              )}
+          {activeService.features?.length > 0 && (
+            <ul className="services-detail__feature-list">
+              {activeService.features.map((feature, index) => (
+                <li key={`${activeService.id}-detail-${index}`}>{feature}</li>
+              ))}
+            </ul>
+          )}
 
-              <ul className="services-card__features">
-                {service.features.map((feature, index) => (
-                  <li key={`${service.id}-${index}`} className="services-card__feature">
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </article>
-        );
-      })}
-    </div>
-  </section>
-);
+          <div className="services-detail__content">
+            {ActiveServiceComponent ? (
+              <ActiveServiceComponent />
+            ) : (
+              <p className="service-detail-card__placeholder">Раздел в разработке.</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="services-screen__header">
+            <h2 className="screen__title">Сервисы кампуса</h2>
+            <p className="screen__subtitle">Различные решения для вашего удобства</p>
+          </div>
+
+          <div className="services-grid">
+            {SERVICES.map((service) => {
+              const initial = service.title?.[0]?.toUpperCase() ?? "";
+              const isDisabled = Boolean(service.disabled);
+
+              return (
+                <article
+                  key={service.id}
+                  className={`services-card${isDisabled ? " services-card--disabled" : ""}`}
+                  role="button"
+                  tabIndex={isDisabled ? -1 : 0}
+                  aria-label={`Открыть сервис ${service.title}`}
+                  aria-disabled={isDisabled}
+                  onClick={() => {
+                    if (isDisabled) {
+                      return;
+                    }
+                    handleOpenService(service.id);
+                  }}
+                  onKeyDown={(event) => handleCardKeyDown(event, service.id, isDisabled)}
+                  style={{
+                    "--services-accent": service.accent,
+                    "--services-accent-bg": service.accentBg,
+                    "--services-accent-border": service.accentBorder,
+                  }}
+                >
+                  <div className="services-card__icon" aria-hidden="true">
+                    {initial}
+                  </div>
+
+                  <div className="services-card__content">
+                    <div className="services-card__header">
+                      <h3 className="services-card__title">{service.title}</h3>
+                    </div>
+
+                    {service.description && (
+                      <p className="services-card__description">{service.description}</p>
+                    )}
+
+                    <ul className="services-card__features">
+                      {service.features.map((feature, index) => (
+                        <li key={`${service.id}-${index}`} className="services-card__feature">
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <button
+                      type="button"
+                      className="services-card__cta"
+                      disabled={isDisabled}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (isDisabled) {
+                          return;
+                        }
+                        handleOpenService(service.id);
+                      }}
+                    >
+                      {isDisabled ? "Скоро" : "Открыть"}
+                      <span aria-hidden="true" className="services-card__cta-icon">
+                        →
+                      </span>
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </section>
+  );
+};
 
 export default ServicesScreen;
