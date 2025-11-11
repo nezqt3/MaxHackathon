@@ -13,6 +13,8 @@ COPY miniapp ./miniapp
 
 RUN npm install -g concurrently
 
-EXPOSE 3000 5000
+EXPOSE 4000 3000
 
-CMD ["concurrently", "--kill-others", "\"cd textbot && node main.js\"", "\"cd miniapp && npm start\""]
+ENV REACT_APP_API_URL=http://localhost:4000
+
+CMD ["concurrently", "--kill-others", "cd textbot && node main.js", "cd miniapp && npm start"]

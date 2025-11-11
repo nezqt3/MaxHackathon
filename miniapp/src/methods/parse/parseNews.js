@@ -1,9 +1,10 @@
 // Получение актуальных новостей с fa.ru
 
-const getNews = async () => {
+export const getNews = async () => {
   try {
-    const response = await fetch("https://www.fa.ru/university/press-center/");
-    const html = await response.text();
+    const response = await fetch("http://localhost:4000/api/news");
+    const data = await response.json();
+    const html = data.html;
 
     const regex =
       /<a[^>]*class="news-card__link"[^>]*href="([^"]+)"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"[^>]*>[\s\S]*?<h[1-9][^>]*class="news-card__title"[^>]*>([\s\S]*?)<\/h[1-9]>/g;
@@ -29,7 +30,7 @@ const getNews = async () => {
   }
 };
 
-const getNewsContent = async (url) => {
+export const getNewsContent = async (url) => {
   try {
     const response = await fetch(url);
     const html = await response.text();
@@ -54,7 +55,3 @@ const getNewsContent = async (url) => {
     return null;
   }
 };
-
-const res = await getNews();
-
-const res2 = await getNewsContent(res[3].url);
