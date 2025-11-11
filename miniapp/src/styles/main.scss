@@ -7,7 +7,33 @@
   font-family: $nunito;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+.screen,
+.schedule-lessons {
+  scrollbar-width: none;
+}
+
+.screen::-webkit-scrollbar,
+.schedule-lessons::-webkit-scrollbar {
+  display: none;
+}
+
 @import "./start-screen.scss";
 @import "./app-shell.scss";
 @import "./choose-university.scss";
 @import "./schedule-screen.scss";
+@import "./services-screen.scss";

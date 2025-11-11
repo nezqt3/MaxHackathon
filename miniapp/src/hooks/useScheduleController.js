@@ -42,6 +42,7 @@ const useScheduleController = () => {
   const [lessonsCache, setLessonsCache] = useState({});
   const searchInputRef = useRef(null);
   const [nowTimestamp, setNowTimestamp] = useState(() => Date.now());
+  const isUnmountedRef = useRef(false);
   const isSearchBusy = isSuggesting || isSubmittingSearch;
   const shouldExpandSearch =
     isEditingProfile ||
@@ -89,6 +90,12 @@ const useScheduleController = () => {
       searchInputRef.current.focus();
     }
   }, [isEditingProfile]);
+
+  useEffect(() => {
+    return () => {
+      isUnmountedRef.current = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!selectedProfile) {
@@ -148,11 +155,13 @@ const useScheduleController = () => {
     if (!selectedProfile || !activeIso || !cacheKey) {
       return;
     }
-    if (cacheEntry?.status === "ready" || cacheEntry?.status === "loading") {
+    if (
+      cacheEntry?.status === "ready" ||
+      cacheEntry?.status === "loading"
+    ) {
       return;
     }
 
-    let aborted = false;
     setLessonsCache((prev) => ({
       ...prev,
       [cacheKey]: { status: "loading", data: prev[cacheKey]?.data ?? [] },
@@ -167,7 +176,7 @@ const useScheduleController = () => {
           activeIso,
         );
 
-        if (aborted) {
+        if (isUnmountedRef.current) {
           return;
         }
 
@@ -182,13 +191,17 @@ const useScheduleController = () => {
               (a.startTimestamp ?? 0) - (b.startTimestamp ?? 0),
           );
 
+        if (isUnmountedRef.current) {
+          return;
+        }
+
         setLessonsCache((prev) => ({
           ...prev,
           [cacheKey]: { status: "ready", data: normalized },
         }));
       } catch (error) {
         console.error("Schedule request failed", error);
-        if (!aborted) {
+        if (!isUnmountedRef.current) {
           setLessonsCache((prev) => ({
             ...prev,
             [cacheKey]: { status: "error", error },
@@ -198,10 +211,6 @@ const useScheduleController = () => {
     };
 
     load();
-
-    return () => {
-      aborted = true;
-    };
   }, [cacheKey, selectedProfile?.id, selectedProfile?.type, activeIso]);
 
   const handleSelectProfile = useCallback((profile) => {
