@@ -49,15 +49,10 @@ const SERVICES = [
     accentBg: "rgba(14, 165, 233, 0.12)",
     accentBorder: "rgba(14, 165, 233, 0.25)",
     description: "Контроль проживания и сервисов без очередей.",
-    features: [
-      "Оплачивать проживание",
-      "Заказывать дополнительные услуги",
-      "Оформлять пропуск для гостя",
-    ],
+    features: ["Оплачивать проживание", "Заказывать дополнительные услуги"],
     urls: [
       "https://www.fa.ru/for-students/oplata/",
       "https://www.fa.ru/university/services/ez/",
-      "https://www.fa.ru/employee/worker/new/pass/",
     ],
   },
   {
@@ -68,9 +63,7 @@ const SERVICES = [
     accentBg: "rgba(34, 197, 94, 0.12)",
     accentBorder: "rgba(34, 197, 94, 0.25)",
     description: "Гибкий календарь для активной жизни кампуса.",
-    features: [
-      "Просматривать календарь событий",
-    ],
+    features: ["Просматривать календарь событий"],
     urls: [
       "https://www.fa.ru/for-students/student-science/events/",
       "https://my.fa.ru/auth/login",
@@ -155,8 +148,6 @@ const ServicesScreen = () => {
               <p className="services-screen__eyebrow">Сервис</p>
               <h2 className="screen__title">{activeService.title}</h2>
             </div>
-
-          
 
             <motion.div
               className="services-detail__content"
@@ -279,6 +270,8 @@ const ServicesScreen = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Встроенный сайт оплаты*/}
+      {/* <iframe src="https://pay.fa.ru/moscow/edu/" /> */}
     </section>
   );
 };

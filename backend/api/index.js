@@ -223,9 +223,28 @@ app.get("/api/calendar", async (req, res) => {
         .status(response.status)
         .send({ error: "Ошибка загрузки данных" });
     }
-
     const html = await response.text();
     res.send(html); // верни просто HTML, не { html }
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
+});
+
+app.get("/api/library", async (req, res) => {
+  const { eng } = req.query;
+
+  try {
+    const response = await fetch(
+      `https://library.fa.ru/res_mainres.asp?cat=${eng}`
+    );
+
+    if (!response.ok) {
+      return res
+        .status(response.status)
+        .send({ error: "Ошибка загрузки данных" });
+    }
+    const html = await response.text();
+    res.send(html);
   } catch (e) {
     res.status(500).send({ error: e.message });
   }

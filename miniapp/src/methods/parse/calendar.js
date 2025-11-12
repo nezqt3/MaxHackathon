@@ -42,8 +42,3 @@ export async function getCalendar(from, to) {
     console.error("Ошибка запроса или парсинга:", err);
   }
 }
-
-const from = "05.11.2025";
-const to = "29.11.2025";
-
-console.log(getCalendar(from, to));
