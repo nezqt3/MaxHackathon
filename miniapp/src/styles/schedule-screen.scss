@@ -307,9 +307,9 @@
 }
 
 .schedule-lesson-card--current {
-  border-color: transparent;
-  background: linear-gradient(135deg, rgba($color-brand-primary, 0.1), rgba($color-brand-secondary, 0.1));
-  box-shadow: 0 25px 45px rgba($color-brand-secondary, 0.18);
+  border-color: $color-border;
+  background: $color-white;
+  box-shadow: 0 20px 35px rgba($color-text-primary, 0.08);
 }
 
 .schedule-lesson-card--past {
