@@ -10,6 +10,7 @@ import ProjectsScreen from "./components/mainScreens/ProjectsScreen";
 import AccountScreen from "./components/mainScreens/AccountScreen";
 import useSwipeNavigation from "./hooks/useSwipeNavigation";
 import "./styles/main.scss";
+import { useUniversity } from "./context/UniversityContext.jsx";
 
 const SCREEN_COMPONENTS = {
   schedule: ScheduleScreen,
@@ -64,9 +65,10 @@ const FLOW_TRANSITION = {
 
 const App = () => {
   const [flowStage, setFlowStage] = useState(FLOW_STAGES.INTRO);
-  const [selectedUniversity, setSelectedUniversity] = useState(null);
   const [activeScreen, setActiveScreen] = useState(MENU_ITEMS[0].key);
   const [direction, setDirection] = useState(0);
+  const { university: selectedUniversity, universities, selectUniversity } =
+    useUniversity();
 
   const ActiveScreen = SCREEN_COMPONENTS[activeScreen] ?? ScheduleScreen;
   const activeIndex = Math.max(SCREEN_KEYS.indexOf(activeScreen), 0);
@@ -140,9 +142,10 @@ const App = () => {
             transition={FLOW_TRANSITION}
           >
             <ChooseUniversity
+              universities={universities}
               selectedId={selectedUniversity?.id}
               onSelect={(university) => {
-                setSelectedUniversity(university);
+                selectUniversity(university);
                 setFlowStage(FLOW_STAGES.MAIN);
               }}
               onBack={() => setFlowStage(FLOW_STAGES.INTRO)}

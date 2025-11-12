@@ -1,4 +1,6 @@
 export const STORAGE_KEY = "max-miniapp:schedule-profile";
+export const getScheduleStorageKey = (universityId) =>
+  universityId ? `${STORAGE_KEY}:${universityId}` : STORAGE_KEY;
 
 const MONTHS_GENITIVE = [
   "января",

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseIdSchedule, parseSchedule } from "../methods/parse/parseSchedule";
+import { useUniversity } from "../context/UniversityContext.jsx";
 import {
-  STORAGE_KEY,
+  getScheduleStorageKey,
   buildWeekDays,
   formatCountdownLabel,
   formatWeekRange,
@@ -12,6 +13,12 @@ import {
 const SEARCH_DEBOUNCE_MS = 250;
 
 const useScheduleController = () => {
+  const { university } = useUniversity();
+  const universityId = university?.apiId || university?.id || null;
+  const storageKey = useMemo(
+    () => getScheduleStorageKey(universityId),
+    [universityId]
+  );
   const todayWeek = useMemo(() => buildWeekDays(0), []);
   const todayIso = useMemo(() => toISODate(new Date()), []);
   const initialIndex = useMemo(() => {
@@ -55,7 +62,7 @@ const useScheduleController = () => {
       return null;
     }
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
+      const stored = window.localStorage.getItem(storageKey);
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
@@ -66,12 +73,25 @@ const useScheduleController = () => {
     if (typeof window === "undefined") {
       return;
     }
-    if (!selectedProfile) {
-      window.localStorage.removeItem(STORAGE_KEY);
+    try {
+      const stored = window.localStorage.getItem(storageKey);
+      setSelectedProfile(stored ? JSON.parse(stored) : null);
+    } catch {
+      setSelectedProfile(null);
+    }
+    setLessonsCache({});
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
       return;
     }
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedProfile));
-  }, [selectedProfile]);
+    if (!selectedProfile) {
+      window.localStorage.removeItem(storageKey);
+      return;
+    }
+    window.localStorage.setItem(storageKey, JSON.stringify(selectedProfile));
+  }, [selectedProfile, storageKey]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -106,6 +126,11 @@ const useScheduleController = () => {
   useEffect(() => {
     const query = searchQuery.trim();
     setSearchError("");
+    if (!universityId) {
+      setSearchResults([]);
+      setIsSuggesting(false);
+      return;
+    }
     if (query.length < 3) {
       setSearchResults([]);
       setIsSuggesting(false);
@@ -121,7 +146,7 @@ const useScheduleController = () => {
     const debounceId = setTimeout(async () => {
       try {
         setIsSuggesting(true);
-        const results = await parseIdSchedule(query);
+        const results = await parseIdSchedule(query, universityId);
         if (aborted) {
           return;
         }
@@ -142,17 +167,17 @@ const useScheduleController = () => {
       aborted = true;
       clearTimeout(debounceId);
     };
-  }, [isEditingProfile, searchQuery, selectedProfile]);
+  }, [isEditingProfile, searchQuery, selectedProfile, universityId]);
 
   const cacheKey =
-    selectedProfile && activeIso
-      ? `${selectedProfile.id}:${selectedProfile.type}:${activeIso}`
+    selectedProfile && activeIso && universityId
+      ? `${universityId}:${selectedProfile.id}:${selectedProfile.type}:${activeIso}`
       : null;
 
   const cacheEntry = cacheKey ? lessonsCache[cacheKey] : undefined;
 
   useEffect(() => {
-    if (!selectedProfile || !activeIso || !cacheKey) {
+    if (!selectedProfile || !activeIso || !cacheKey || !universityId) {
       return;
     }
     if (cacheEntry?.status === "ready" || cacheEntry?.status === "loading") {
@@ -170,7 +195,8 @@ const useScheduleController = () => {
           selectedProfile.id,
           selectedProfile.type,
           activeIso,
-          activeIso
+          activeIso,
+          universityId
         );
 
         if (isUnmountedRef.current) return;
@@ -201,7 +227,7 @@ const useScheduleController = () => {
     };
 
     load();
-  }, [cacheKey, cacheEntry?.status, selectedProfile, activeIso]);
+  }, [cacheKey, cacheEntry?.status, selectedProfile, activeIso, universityId]);
 
   const handleSelectProfile = useCallback((profile) => {
     setSelectedProfile(profile);
@@ -222,6 +248,10 @@ const useScheduleController = () => {
       if (selectedProfile && !isEditingProfile) {
         return;
       }
+      if (!universityId) {
+        setSearchError("Выберите вуз, чтобы искать расписание");
+        return;
+      }
       if (query.length < 3) {
         setSearchError("Введите минимум 3 символа");
         return;
@@ -230,7 +260,7 @@ const useScheduleController = () => {
       try {
         setIsSubmittingSearch(true);
         setSearchError("");
-        const results = await parseIdSchedule(query);
+        const results = await parseIdSchedule(query, universityId);
         setSearchResults(results.slice(0, 6));
         if (!results.length) {
           setSearchError("Ничего не найдено");
@@ -250,7 +280,7 @@ const useScheduleController = () => {
         setIsSubmittingSearch(false);
       }
     },
-    [handleSelectProfile, isEditingProfile, searchQuery, selectedProfile]
+    [handleSelectProfile, isEditingProfile, searchQuery, selectedProfile, universityId]
   );
 
   const handleEnterEditMode = useCallback(() => {

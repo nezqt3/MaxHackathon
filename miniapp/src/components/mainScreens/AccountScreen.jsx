@@ -1,28 +1,30 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useUniversity } from "../../context/UniversityContext.jsx";
 
 const SKELETON_ITEMS = Array.from({ length: 1 }, (_, i) => i);
 
 const AccountScreen = () => {
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
+  const { university } = useUniversity();
 
   /* Будем парсить из max */
 
   useEffect(() => {
+    setLoading(true);
     const timer = setTimeout(() => {
-      // Имитируем загрузку данных профиля
       setProfileData({
         name: "Иван Иванов",
         email: "ivan@example.com",
         avatar: "https://i.pravatar.cc/150?img=12",
-        university: localStorage.getItem("university"),
+        university: university?.title ?? "Вуз не выбран",
       });
       setLoading(false);
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [university]);
 
   return (
     <section className="screen account-screen">

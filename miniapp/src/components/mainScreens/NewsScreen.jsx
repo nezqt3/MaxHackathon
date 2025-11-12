@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { getNews, getNewsContent } from "../../methods/parse/parseNews";
 import {
@@ -10,6 +10,7 @@ import {
   newsOverviewMotion,
   newsTapFeedback,
 } from "../../animations/NewsAnim";
+import { useUniversity } from "../../context/UniversityContext.jsx";
 
 const CACHE_LIFETIME = 1000 * 60 * 60; // 1 час
 const SKELETON_ITEMS = Array.from({ length: 4 }, (_, index) => index);
@@ -43,60 +44,94 @@ export default function NewsScreen() {
   const [newsContent, setNewsContent] = useState("");
   const [contentLoading, setContentLoading] = useState(false);
   const [error, setError] = useState("");
+  const { university } = useUniversity();
+  const universityId = university?.apiId || university?.id || null;
+  const domainLabel = university?.domain || "campus";
+  const cachePrefix = useMemo(
+    () => (universityId ? `news-${universityId}` : null),
+    [universityId]
+  );
 
   const featuredNews = news[0] ?? null;
   const otherNews = featuredNews ? news.slice(1) : news;
 
-  const loadNews = useCallback(async (forceRefresh = false) => {
-    setError("");
-
-    const cached = forceRefresh ? null : localStorage.getItem("newsData");
-    const cachedTimeRaw = forceRefresh ? null : localStorage.getItem("newsDataTime");
-    const cachedTime = cachedTimeRaw ? Number(cachedTimeRaw) : null;
-
-    if (!forceRefresh && cached && cachedTime && Date.now() - cachedTime < CACHE_LIFETIME) {
-      try {
-        const parsedNews = JSON.parse(cached);
-        setNews(parsedNews);
+  const loadNews = useCallback(
+    async (forceRefresh = false) => {
+      if (!universityId) {
         setLoading(false);
+        setNews([]);
+        setError("Выберите вуз, чтобы увидеть новости кампуса.");
         return;
-      } catch (cacheError) {
-        console.warn("Не удалось прочитать кэш новостей:", cacheError);
       }
-    }
 
-    setLoading(true);
+      setError("");
 
-    try {
-      const freshNews = await getNews();
-      const normalizedNews = Array.isArray(freshNews) ? freshNews : [];
+      const cacheKey = cachePrefix ?? "newsData";
+      const cacheTimeKey = `${cacheKey}Time`;
 
-      setNews(normalizedNews);
+      const cached = forceRefresh ? null : localStorage.getItem(cacheKey);
+      const cachedTimeRaw = forceRefresh ? null : localStorage.getItem(cacheTimeKey);
+      const cachedTime = cachedTimeRaw ? Number(cachedTimeRaw) : null;
 
-      localStorage.setItem("newsData", JSON.stringify(normalizedNews));
-      localStorage.setItem("newsDataTime", Date.now().toString());
-    } catch (fetchError) {
-      console.error("Ошибка при загрузке новостей:", fetchError);
-      setNews([]);
-      setError("Не получилось загрузить новости. Попробуйте чуть позже.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      if (
+        !forceRefresh &&
+        cached &&
+        cachedTime &&
+        Date.now() - cachedTime < CACHE_LIFETIME
+      ) {
+        try {
+          const parsedNews = JSON.parse(cached);
+          setNews(parsedNews);
+          setLoading(false);
+          return;
+        } catch (cacheError) {
+          console.warn("Не удалось прочитать кэш новостей:", cacheError);
+        }
+      }
+
+      setLoading(true);
+
+      try {
+        const freshNews = await getNews(universityId);
+        const normalizedNews = Array.isArray(freshNews) ? freshNews : [];
+
+        setNews(normalizedNews);
+
+        localStorage.setItem(cacheKey, JSON.stringify(normalizedNews));
+        localStorage.setItem(cacheTimeKey, Date.now().toString());
+      } catch (fetchError) {
+        console.error("Ошибка при загрузке новостей:", fetchError);
+        setNews([]);
+        setError("Не получилось загрузить новости. Попробуйте чуть позже.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [cachePrefix, universityId]
+  );
 
   useEffect(() => {
     loadNews();
   }, [loadNews]);
 
+  useEffect(() => {
+    setActiveNews(null);
+    setNewsContent("");
+    setContentLoading(false);
+  }, [universityId]);
+
   const openNews = async (item) => {
-    if (!item) return;
+    if (!item || !universityId) {
+      setError("Выберите вуз, чтобы прочитать новость.");
+      return;
+    }
 
     setActiveNews(item);
     setContentLoading(true);
     setNewsContent("");
 
     try {
-      const cacheKey = `newsContent_${item.url}`;
+      const cacheKey = `${cachePrefix || "newsContent"}_${item.url}`;
       const cachedContent = localStorage.getItem(cacheKey);
 
       if (cachedContent) {
@@ -104,7 +139,7 @@ export default function NewsScreen() {
         return;
       }
 
-      const content = await getNewsContent(item.url);
+      const content = await getNewsContent(universityId, item.url);
       const finalText = content || "Не удалось загрузить содержимое новости 😢";
 
       setNewsContent(finalText);
@@ -187,7 +222,7 @@ export default function NewsScreen() {
                 <div className="news-detail__meta">
                   <span className="news-detail__chip">{getBadgeLabel(0)}</span>
                   <span className="news-detail__chip news-detail__chip--muted">
-                    fa.ru
+                    {domainLabel}
                   </span>
                 </div>
               </div>
@@ -262,7 +297,9 @@ export default function NewsScreen() {
                 <span className="news-overview__count">
                   {news.length || "—"} материалов
                 </span>
-                <span className="news-overview__updated">Источник: fa.ru</span>
+                <span className="news-overview__updated">
+                  Источник: {domainLabel}
+                </span>
               </motion.div>
             </div>
 
@@ -308,7 +345,9 @@ export default function NewsScreen() {
                         <span className="news-hero-card__badge">
                           {getBadgeLabel(0)}
                         </span>
-                        <span className="news-hero-card__updated">Новости fa.ru</span>
+                        <span className="news-hero-card__updated">
+                          Новости {domainLabel}
+                        </span>
                       </div>
                       <h3 className="news-hero-card__title">
                         {featuredNews.title}
@@ -396,7 +435,7 @@ export default function NewsScreen() {
                             <div className="news-card__badge">{badge}</div>
                             <h3 className="news-card__title">{item.title}</h3>
                             <div className="news-card__footer">
-                              <span className="news-card__meta">fa.ru</span>
+                          <span className="news-card__meta">{domainLabel}</span>
                               <motion.button
                                 type="button"
                                 className="news-card__cta"

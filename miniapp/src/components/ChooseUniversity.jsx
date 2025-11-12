@@ -1,15 +1,7 @@
 import { motion } from "motion/react";
 import QuestionMark from "../static/question-mark.svg";
 import Settings from "../static/settings.svg";
-import LogoFin from "../static/logoFin.svg";
-
-const DEFAULT_UNIVERSITIES = [
-  {
-    logo: LogoFin,
-    title: "Финансовый университет при правительстве РФ",
-    id: "financial-university",
-  },
-];
+import { UNIVERSITIES as DEFAULT_UNIVERSITIES } from "../config/universities";
 
 const ChooseUniversity = ({
   universities = DEFAULT_UNIVERSITIES,
@@ -74,10 +66,7 @@ const ChooseUniversity = ({
               type="button"
               className="choose-university__universities-university-choose"
               disabled={isSelected}
-              onClick={() => {
-                onSelect(university);
-                localStorage.setItem("university", university.title);
-              }}
+              onClick={() => onSelect(university)}
             >
               {isSelected ? "Выбрано" : "Выбрать"}
             </button>

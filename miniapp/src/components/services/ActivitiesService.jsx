@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { getCalendar } from "../../methods/parse/calendar";
+import { useUniversity } from "../../context/UniversityContext.jsx";
 
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -53,6 +54,8 @@ const ActivitiesService = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const { university } = useUniversity();
+  const universityId = university?.apiId || university?.id || null;
 
   const monthLabel = useMemo(() => {
     const label = new Intl.DateTimeFormat("ru-RU", {
@@ -161,12 +164,19 @@ const ActivitiesService = () => {
     const [fromDate, toDate] =
       rangeStart <= rangeEnd ? [rangeStart, rangeEnd] : [rangeEnd, rangeStart];
 
+    if (!universityId) {
+      setError("Выберите вуз, чтобы получить календарь мероприятий.");
+      setHasSearched(true);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setHasSearched(true);
 
     try {
       const response = await getCalendar(
+        universityId,
         formatDateForApi(fromDate),
         formatDateForApi(toDate),
       );

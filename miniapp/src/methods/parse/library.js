@@ -1,7 +1,12 @@
-export const getLibraryResources = async (language = "rus") => {
+import { API_BASE_URL } from "../../config/api";
+
+export const getLibraryResources = async (universityId, language = "rus") => {
+  if (!universityId) {
+    return "";
+  }
   const response = await fetch(
-    `http://localhost:4000/api/library?=${language}`
+    `${API_BASE_URL}/api/${universityId}/library?lang=${language}`
   );
-  if (!response.ok) throw new Error(`HTTP ${res.status}`);
-  const html = await response.text();
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.text();
 };

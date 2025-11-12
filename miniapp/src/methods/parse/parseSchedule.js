@@ -1,12 +1,10 @@
-// Поиск расписания по ключу из текст инпута
+import { API_BASE_URL } from "../../config/api";
 
-export const parseIdSchedule = async (term) => {
-  if (!term) return [];
+export const parseIdSchedule = async (term, universityId) => {
+  if (!term || !universityId) return [];
   try {
     const response = await fetch(
-      `http://localhost:4000/api/schedule/search?term=${encodeURIComponent(
-        term
-      )}`
+      `${API_BASE_URL}/api/${universityId}/schedule/search?term=${encodeURIComponent(term)}`
     );
     if (!response.ok) throw new Error("Ошибка поиска расписания");
     const data = await response.json();
@@ -17,18 +15,18 @@ export const parseIdSchedule = async (term) => {
   }
 };
 
-// Поиск необходимого расписания
-
 export const parseSchedule = async (
   profileId,
   profileType,
   startIso,
-  endIso
+  endIso,
+  universityId
 ) => {
-  if (!profileId || !profileType || !startIso || !endIso) return [];
+  if (!profileId || !profileType || !startIso || !endIso || !universityId)
+    return [];
   try {
     const response = await fetch(
-      `http://localhost:4000/api/schedule?profileId=${profileId}&profileType=${profileType}&start=${startIso}&end=${endIso}`
+      `${API_BASE_URL}/api/${universityId}/schedule?profileId=${profileId}&profileType=${profileType}&start=${startIso}&end=${endIso}`
     );
     if (!response.ok) throw new Error("Ошибка загрузки расписания");
     const data = await response.json();

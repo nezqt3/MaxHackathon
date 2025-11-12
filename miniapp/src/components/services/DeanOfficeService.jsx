@@ -1,8 +1,9 @@
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getBids } from "../../methods/parse/links";
 import ServiceFeatureStub from "./ServiceFeatureStub";
 import ServicePaymentCard from "./ServicePaymentCard";
+import { useUniversity } from "../../context/UniversityContext.jsx";
 
 const PAYMENT_OPTIONS = [
   {
@@ -34,6 +35,14 @@ const DeanOfficeService = () => {
   const [isFrameLoading, setIsFrameLoading] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [portalContainer, setPortalContainer] = useState(null);
+  const { university } = useUniversity();
+  const universityId = university?.apiId || university?.id || null;
+
+  const paymentOptions = useMemo(() => {
+    const configuredOptions =
+      university?.services?.deanOffice?.paymentOptions ?? [];
+    return configuredOptions.length > 0 ? configuredOptions : PAYMENT_OPTIONS;
+  }, [university]);
 
   const handleCloseOverlay = useCallback(() => {
     setIsOverlayOpen(false);
@@ -42,10 +51,15 @@ const DeanOfficeService = () => {
   }, []);
 
   const loadBids = useCallback(async () => {
+    if (!universityId) {
+      setBids([]);
+      setHasLoadedBids(false);
+      return;
+    }
     setIsBidsLoading(true);
     setBidsError(null);
     try {
-      const result = await getBids();
+      const result = await getBids(universityId);
       setBids(Array.isArray(result) ? result : []);
       setHasLoadedBids(true);
     } catch (error) {
@@ -53,9 +67,13 @@ const DeanOfficeService = () => {
     } finally {
       setIsBidsLoading(false);
     }
-  }, []);
+  }, [universityId]);
 
   const handleTriggerClick = async () => {
+    if (!universityId) {
+      setBidsError("Выберите вуз, чтобы получить список заявлений.");
+      return;
+    }
     if (!isBidListVisible) {
       setIsBidListVisible(true);
       if (!hasLoadedBids && !isBidsLoading) {
@@ -110,6 +128,13 @@ const DeanOfficeService = () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOverlayOpen, handleCloseOverlay]);
+
+  useEffect(() => {
+    setBids([]);
+    setIsBidListVisible(false);
+    setHasLoadedBids(false);
+    setBidsError(null);
+  }, [universityId]);
 
   const overlay =
     portalContainer && isOverlayOpen && selectedBid
@@ -179,8 +204,12 @@ const DeanOfficeService = () => {
         <div className="service-detail-grid__column service-detail-grid__column--primary">
           <ServicePaymentCard
             title="Оплата образовательных услуг"
-            description="Форма из официального сервиса Финансового университета открывается прямо внутри мини-приложения."
-            options={PAYMENT_OPTIONS}
+            description={
+              university
+                ? `Форма из официального сервиса ${university.shortTitle || university.title} открывается прямо внутри мини-приложения.`
+                : "Форма из официального сервиса университета откроется внутри мини-приложения."
+            }
+            options={paymentOptions}
           />
 
           <section className="service-detail-card service-bids-card">
@@ -194,7 +223,7 @@ const DeanOfficeService = () => {
               type="button"
               className="service-bids-card__trigger"
               onClick={handleTriggerClick}
-              disabled={isBidsLoading}
+              disabled={isBidsLoading || !universityId}
             >
               {isBidsLoading
                 ? "Загружаем заявки…"
@@ -202,6 +231,12 @@ const DeanOfficeService = () => {
                   ? "Обновить список"
                   : "Выбрать заявку"}
             </button>
+
+            {!universityId && (
+              <p className="service-detail-card__placeholder">
+                Выберите вуз на стартовом экране, чтобы увидеть список заявлений.
+              </p>
+            )}
 
             {isBidListVisible && (
               <div

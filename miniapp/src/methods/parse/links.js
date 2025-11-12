@@ -1,34 +1,19 @@
-export async function getBids() {
+import { API_BASE_URL } from "../../config/api";
+
+export async function getBids(universityId) {
+  if (!universityId) {
+    return [];
+  }
+
   try {
-    const res = await fetch(`http://localhost:4000/api/links`);
+    const res = await fetch(
+      `${API_BASE_URL}/api/${universityId}/services/dean-office/bids`
+    );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const html = await res.text();
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-
-    const articles = doc.querySelectorAll("article.page-card-link.app-card");
-
-    const bids = [];
-
-    articles.forEach((article) => {
-      const title = article
-        .querySelector("h4.page-card-link__title")
-        ?.textContent.trim();
-
-      const url = article
-        .querySelector("a.ui-icon-button._primary")
-        ?.getAttribute("href");
-
-      if (title && url) {
-        bids.push({ title, url });
-      }
-    });
-
-    return bids;
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
   } catch (err) {
-    console.error("Ошибка запроса или парсинга:", err);
+    console.error("Ошибка запроса заявлений деканата:", err);
     return [];
   }
 }
