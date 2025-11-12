@@ -25,7 +25,7 @@ const useScheduleController = () => {
 
   useEffect(() => {
     setSelectedDayIndex((prev) =>
-      Math.min(Math.max(prev, 0), weekDays.length - 1),
+      Math.min(Math.max(prev, 0), weekDays.length - 1)
     );
   }, [weekDays]);
 
@@ -155,10 +155,7 @@ const useScheduleController = () => {
     if (!selectedProfile || !activeIso || !cacheKey) {
       return;
     }
-    if (
-      cacheEntry?.status === "ready" ||
-      cacheEntry?.status === "loading"
-    ) {
+    if (cacheEntry?.status === "ready" || cacheEntry?.status === "loading") {
       return;
     }
 
@@ -173,12 +170,10 @@ const useScheduleController = () => {
           selectedProfile.id,
           selectedProfile.type,
           activeIso,
-          activeIso,
+          activeIso
         );
 
-        if (isUnmountedRef.current) {
-          return;
-        }
+        if (isUnmountedRef.current) return;
 
         if (!Array.isArray(lessonsData)) {
           throw new Error("Неверный ответ от сервиса расписания");
@@ -186,14 +181,9 @@ const useScheduleController = () => {
 
         const normalized = lessonsData
           .map((lesson, index) => normalizeLesson(lesson, activeIso, index))
-          .sort(
-            (a, b) =>
-              (a.startTimestamp ?? 0) - (b.startTimestamp ?? 0),
-          );
+          .sort((a, b) => (a.startTimestamp ?? 0) - (b.startTimestamp ?? 0));
 
-        if (isUnmountedRef.current) {
-          return;
-        }
+        if (isUnmountedRef.current) return;
 
         setLessonsCache((prev) => ({
           ...prev,
@@ -211,7 +201,7 @@ const useScheduleController = () => {
     };
 
     load();
-  }, [cacheKey, selectedProfile?.id, selectedProfile?.type, activeIso]);
+  }, [cacheKey, cacheEntry?.status, selectedProfile, activeIso]);
 
   const handleSelectProfile = useCallback((profile) => {
     setSelectedProfile(profile);
@@ -249,7 +239,7 @@ const useScheduleController = () => {
 
         const exactMatch =
           results.find(
-            (result) => result.label.toLowerCase() === query.toLowerCase(),
+            (result) => result.label.toLowerCase() === query.toLowerCase()
           ) || results[0];
 
         handleSelectProfile(exactMatch);
@@ -260,7 +250,7 @@ const useScheduleController = () => {
         setIsSubmittingSearch(false);
       }
     },
-    [handleSelectProfile, isEditingProfile, searchQuery, selectedProfile],
+    [handleSelectProfile, isEditingProfile, searchQuery, selectedProfile]
   );
 
   const handleEnterEditMode = useCallback(() => {
@@ -289,7 +279,7 @@ const useScheduleController = () => {
 
   const hasProfile = Boolean(selectedProfile);
   const isLoadingLessons = cacheEntry?.status === "loading";
-  const lessons = cacheEntry?.data ?? [];
+  const lessons = useMemo(() => cacheEntry?.data ?? [], [cacheEntry]);
 
   const nextLessonInfo = useMemo(() => {
     if (!lessonsCache) {
@@ -317,9 +307,7 @@ const useScheduleController = () => {
           return;
         }
         const isCurrent =
-          endTs !== null &&
-          nowTimestamp >= startTs &&
-          nowTimestamp <= endTs;
+          endTs !== null && nowTimestamp >= startTs && nowTimestamp <= endTs;
         const isPast = !isCurrent && endTs !== null && nowTimestamp > endTs;
         if (isCurrent || isPast) {
           return;
@@ -375,7 +363,7 @@ const useScheduleController = () => {
         nextLessonInfo &&
         cacheKey &&
         nextLessonInfo.cacheKey === cacheKey &&
-        nextLessonInfo.lessonId === lesson.id,
+        nextLessonInfo.lessonId === lesson.id
     );
 
     if (upcomingIndex === -1) {
@@ -387,17 +375,14 @@ const useScheduleController = () => {
         ? {
             ...lesson,
             countdownLabel: formatCountdownLabel(
-              (lesson.startTimestamp ?? 0) - nowTimestamp,
+              (lesson.startTimestamp ?? 0) - nowTimestamp
             ),
           }
-        : lesson,
+        : lesson
     );
   }, [cacheKey, lessons, nextLessonInfo, nowTimestamp]);
 
-  const weekRangeLabel = useMemo(
-    () => formatWeekRange(weekDays),
-    [weekDays],
-  );
+  const weekRangeLabel = useMemo(() => formatWeekRange(weekDays), [weekDays]);
 
   return {
     weekDays,
