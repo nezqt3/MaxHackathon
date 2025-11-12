@@ -210,4 +210,25 @@ app.get("/api/news", async (req, res) => {
   }
 });
 
+app.get("/api/calendar", async (req, res) => {
+  const { from, to } = req.query;
+
+  try {
+    const response = await fetch(
+      `https://www.fa.ru/ajax/events-all.php?iblock=2&block=29137&date-from=${from}&date-to=${to}`
+    );
+
+    if (!response.ok) {
+      return res
+        .status(response.status)
+        .send({ error: "Ошибка загрузки данных" });
+    }
+
+    const html = await response.text();
+    res.send(html); // верни просто HTML, не { html }
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
+});
+
 app.listen(4000, () => console.log("Server running on port 4000"));
