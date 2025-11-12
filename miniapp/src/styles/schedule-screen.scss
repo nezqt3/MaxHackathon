@@ -303,13 +303,13 @@
   border-radius: 24px;
   border: 1px solid $color-border;
   background: $color-white;
-  box-shadow: 0 20px 35px rgba($color-text-primary, 0.08);
+  box-shadow: 0 5px 5px rgba($color-text-primary, 0.08);
 }
 
 .schedule-lesson-card--current {
   border-color: $color-border;
   background: $color-white;
-  box-shadow: 0 20px 35px rgba($color-text-primary, 0.08);
+  box-shadow: 0 5px 5px rgba($color-text-primary, 0.08);
 }
 
 .schedule-lesson-card--past {
