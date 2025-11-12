@@ -3,11 +3,11 @@ import { AnimatePresence, motion } from "motion/react";
 import StartScreen from "./components/StartScreen";
 import ChooseUniversity from "./components/ChooseUniversity";
 import MenuBar, { MENU_ITEMS } from "./components/MenuBar";
-import ScheduleScreen from "./components/screens/ScheduleScreen";
-import ServicesScreen from "./components/screens/ServicesScreen";
-import NewsScreen from "./components/screens/NewsScreen";
-import ProjectsScreen from "./components/screens/ProjectsScreen";
-import AccountScreen from "./components/screens/AccountScreen";
+import ScheduleScreen from "./components/mainScreens/ScheduleScreen";
+import ServicesScreen from "./components/mainScreens/ServicesScreen";
+import NewsScreen from "./components/mainScreens/NewsScreen";
+import ProjectsScreen from "./components/mainScreens/ProjectsScreen";
+import AccountScreen from "./components/mainScreens/AccountScreen";
 import useSwipeNavigation from "./hooks/useSwipeNavigation";
 import "./styles/main.scss";
 
@@ -123,7 +123,9 @@ const App = () => {
             exit="exit"
             transition={FLOW_TRANSITION}
           >
-            <StartScreen onContinue={() => setFlowStage(FLOW_STAGES.UNIVERSITY)} />
+            <StartScreen
+              onContinue={() => setFlowStage(FLOW_STAGES.UNIVERSITY)}
+            />
           </motion.div>
         );
       case FLOW_STAGES.UNIVERSITY:
@@ -160,12 +162,13 @@ const App = () => {
             transition={FLOW_TRANSITION}
           >
             <div className="app-shell">
-              <main
-                className="app-shell__content"
-                {...swipeHandlers}
-              >
+              <main className="app-shell__content" {...swipeHandlers}>
                 <div className="screen-stack">
-                  <AnimatePresence initial={false} custom={direction} mode="sync">
+                  <AnimatePresence
+                    initial={false}
+                    custom={direction}
+                    mode="sync"
+                  >
                     <motion.div
                       key={activeScreen}
                       className="screen-stack__item"
@@ -181,7 +184,10 @@ const App = () => {
                   </AnimatePresence>
                 </div>
               </main>
-              <MenuBar activeItem={activeScreen} onChange={handleScreenChange} />
+              <MenuBar
+                activeItem={activeScreen}
+                onChange={handleScreenChange}
+              />
             </div>
           </motion.div>
         );

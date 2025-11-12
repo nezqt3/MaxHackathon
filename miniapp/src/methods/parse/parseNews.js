@@ -33,8 +33,8 @@ export const getNews = async () => {
 
 export const getNewsContent = async (url) => {
   try {
-    const response = await fetch(url);
-    const html = await response.text();
+    const response = await fetch(`http://localhost:4000/api/news?url=${url}"`);
+    const { html } = await response.json();
 
     const regex =
       /<section[^>]*class="app-section _is-slim _gutter-md"[^>]*>([\s\S]*?)<\/section>/i;
