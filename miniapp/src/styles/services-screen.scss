@@ -1,9 +1,15 @@
-@use "./variables";
-
+@use "./variables" as *;
 .services-screen {
   gap: 1.75rem;
   overflow-y: auto;
   padding-bottom: 2.5rem;
+}
+
+.services-screen__overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  flex: 1;
 }
 
 .services-screen--detail {
@@ -21,7 +27,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: variables.$white-blue-color;
+  color: $color-text-muted;
 }
 
 .services-grid {
@@ -31,16 +37,16 @@
 }
 
 .services-card {
-  --services-accent: #6366f1;
-  --services-accent-bg: rgba(99, 102, 241, 0.12);
-  --services-accent-border: rgba(99, 102, 241, 0.25);
-  background: linear-gradient(135deg, var(--services-accent-bg), #ffffff);
+  --services-accent: #{$color-brand-secondary};
+  --services-accent-bg: #{rgba($color-brand-secondary, 0.12)};
+  --services-accent-border: #{rgba($color-brand-secondary, 0.25)};
+  background: linear-gradient(135deg, var(--services-accent-bg), $color-white);
   border: 1px solid var(--services-accent-border);
   border-radius: 28px;
   padding: 1.25rem 1.5rem;
   display: flex;
   gap: 1rem;
-  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 22px 45px rgba($color-text-primary, 0.08);
   cursor: pointer;
   transition:
     transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
@@ -48,13 +54,8 @@
     border-color 0.2s ease;
 }
 
-.services-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 26px 55px rgba(15, 23, 42, 0.12);
-}
-
 .services-card:focus-visible {
-  outline: 3px solid var(--services-accent, variables.$purple);
+  outline: 3px solid var(--services-accent, $color-brand-secondary);
   outline-offset: 4px;
 }
 
@@ -62,7 +63,7 @@
   opacity: 0.55;
   cursor: not-allowed;
   pointer-events: none;
-  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 12px 25px rgba($color-text-primary, 0.05);
 }
 
 .services-card__icon {
@@ -74,9 +75,9 @@
   justify-content: center;
   font-size: 1.15rem;
   font-weight: 700;
-  color: variables.$white-color;
-  background: linear-gradient(135deg, var(--services-accent), rgba(255, 255, 255, 0.12));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  color: $color-white;
+  background: linear-gradient(135deg, var(--services-accent), rgba($color-white, 0.12));
+  box-shadow: inset 0 0 0 1px rgba($color-white, 0.25);
   flex-shrink: 0;
 }
 
@@ -95,12 +96,12 @@
 
 .services-card__title {
   font-size: 1.15rem;
-  color: variables.$black-color;
+  color: $color-text-primary;
 }
 
 .services-card__description {
   font-size: 0.95rem;
-  color: variables.$light-gray-color;
+  color: $color-text-muted;
   margin: 0;
 }
 
@@ -115,7 +116,7 @@
 
 .services-card__feature {
   font-size: 0.98rem;
-  color: variables.$black-color;
+  color: $color-text-primary;
   line-height: 1.35;
   position: relative;
   padding-left: 1.4rem;
@@ -129,8 +130,8 @@
   border-radius: 999px;
   left: 0.2rem;
   top: 0.55rem;
-  background: var(--services-accent, variables.$purple);
-  box-shadow: 0 0 0 5px var(--services-accent-bg, rgba(99, 102, 241, 0.2));
+  background: var(--services-accent, $color-brand-secondary);
+  box-shadow: 0 0 0 5px var(--services-accent-bg, rgba($color-brand-secondary, 0.2));
 }
 
 .services-card__cta {
@@ -138,8 +139,8 @@
   padding: 0.4rem 0.95rem;
   border-radius: 999px;
   border: none;
-  background: rgba(255, 255, 255, 0.65);
-  color: var(--services-accent, variables.$purple);
+  background: rgba($color-white, 0.65);
+  color: var(--services-accent, $color-brand-secondary);
   font-size: 0.85rem;
   font-weight: 700;
   align-self: flex-start;
@@ -148,7 +149,7 @@
   gap: 0.35rem;
   cursor: pointer;
   font: inherit;
-  box-shadow: inset 0 0 0 1px var(--services-accent-border, rgba(99, 102, 241, 0.25));
+  box-shadow: inset 0 0 0 1px var(--services-accent-border, rgba($color-brand-secondary, 0.25));
   transition: background 0.2s ease, color 0.2s ease;
 }
 
@@ -156,21 +157,16 @@
   font-size: 1rem;
 }
 
-.services-card__cta:hover {
-  background: var(--services-accent, variables.$purple);
-  color: #ffffff;
-}
-
 .services-card__cta:focus-visible {
-  outline: 2px solid var(--services-accent, variables.$purple);
+  outline: 2px solid var(--services-accent, $color-brand-secondary);
   outline-offset: 2px;
 }
 
 .services-card__cta:disabled {
   cursor: not-allowed;
-  color: rgba(15, 23, 42, 0.35);
-  background: rgba(248, 250, 252, 0.7);
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+  color: rgba($color-text-primary, 0.35);
+  background: rgba($color-surface, 0.8);
+  box-shadow: inset 0 0 0 1px rgba($color-text-primary, 0.08);
 }
 
 .services-detail {
@@ -185,19 +181,14 @@
   border: none;
   border-radius: 999px;
   padding: 0.4rem 1rem;
-  background: #f1f5f9;
-  color: variables.$light-gray-color;
+  background: $color-surface;
+  color: $color-text-muted;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
-}
-
-.services-detail__back:hover {
-  background: #e2e8f0;
-  color: variables.$black-color;
 }
 
 .services-detail__header {
@@ -218,10 +209,10 @@
 .services-detail__feature-list li {
   padding: 0.4rem 0.9rem;
   border-radius: 12px;
-  background: #f8fafc;
+  background: $color-surface;
   font-size: 0.9rem;
-  color: variables.$black-color;
-  border: 1px solid variables.$white-gray-color;
+  color: $color-text-primary;
+  border: 1px solid $color-border;
 }
 
 .services-detail__content {
@@ -233,10 +224,10 @@
 
 .service-detail-card {
   border-radius: 28px;
-  border: 1px solid variables.$white-gray-color;
-  background: #ffffff;
+  border: 1px solid $color-border;
+  background: $color-white;
   padding: 1.5rem;
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 35px rgba($color-text-primary, 0.08);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -244,11 +235,11 @@
 
 .service-detail-card__title {
   font-size: 1.35rem;
-  color: variables.$black-color;
+  color: $color-text-primary;
 }
 
 .service-detail-card__text {
-  color: variables.$light-gray-color;
+  color: $color-text-muted;
   font-size: 0.95rem;
   margin-bottom: 0.25rem;
 }
@@ -257,12 +248,12 @@
   flex: 1;
   display: flex;
   align-items: center;
-  color: variables.$light-gray-color;
+  color: $color-text-muted;
   font-size: 0.95rem;
 }
 
 .service-detail-card__placeholder {
-  color: variables.$light-gray-color;
+  color: $color-text-muted;
 }
 
 .services-status {
@@ -282,13 +273,13 @@
 }
 
 .services-status--success {
-  color: #15803d;
-  background: rgba(34, 197, 94, 0.15);
+  color: $color-success;
+  background: rgba($color-success, 0.15);
 }
 
 .services-status--pending {
-  color: #b45309;
-  background: rgba(251, 191, 36, 0.18);
+  color: $color-warning;
+  background: rgba($color-warning, 0.18);
 }
 
 @media (max-width: 640px) {
@@ -306,5 +297,22 @@
 
   .services-detail__feature-list {
     flex-direction: column;
+  }
+}
+
+@media (hover: hover) {
+  .services-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 26px 55px rgba($color-text-primary, 0.12);
+  }
+
+  .services-card__cta:hover {
+    background: var(--services-accent, $color-brand-secondary);
+    color: $color-white;
+  }
+
+  .services-detail__back:hover {
+    background: $color-border;
+    color: $color-text-primary;
   }
 }

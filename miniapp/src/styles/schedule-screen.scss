@@ -1,5 +1,4 @@
-@use "./variables";
-
+@use "./variables" as *;
 .schedule-screen {
   gap: 1.5rem;
   padding-bottom: 0.25rem;
@@ -40,7 +39,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: $white-blue-color;
+  color: $color-text-muted;
   margin-bottom: 0.15rem;
 }
 
@@ -54,9 +53,9 @@
 .schedule-search__field {
   flex: 1;
   position: relative;
-  border: 1px solid $white-gray-color;
+  border: 1px solid $color-border;
   border-radius: 18px;
-  background: #f8fafc;
+  background: $color-surface;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
@@ -67,24 +66,24 @@
   font-size: 1rem;
   padding: 0.9rem 1.25rem;
   outline: none;
-  color: $black-color;
+  color: $color-text-primary;
 }
 
 .schedule-search__field input::placeholder {
-  color: #94a3b8;
+  color: $color-text-muted;
 }
 
 .schedule-search__field:focus-within {
-  border-color: #a78bfa;
-  background: #fff;
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.15);
+  border-color: $color-brand-secondary;
+  background: $color-white;
+  box-shadow: 0 6px 20px rgba($color-brand-secondary, 0.2);
 }
 
 .schedule-search__submit {
   border: none;
   border-radius: 999px;
-  background: linear-gradient(120deg, #004cff, #7c3aed);
-  color: #fff;
+  background: linear-gradient(120deg, $color-brand-primary, $color-brand-secondary);
+  color: $color-white;
   width: 48px;
   height: 48px;
   display: inline-flex;
@@ -93,7 +92,7 @@
   font-weight: 600;
   padding: 0;
   cursor: pointer;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 10px 20px rgba($color-text-primary, 0.12);
   flex-shrink: 0;
 }
 
@@ -104,7 +103,7 @@
 
 .schedule-search__error {
   font-size: 0.85rem;
-  color: #f87171;
+  color: $color-error;
   margin: -0.25rem 0 0;
 }
 
@@ -113,15 +112,15 @@
   margin: -0.1rem 0 0;
   padding: 0;
   border-radius: 20px;
-  border: 1px solid $white-gray-color;
-  background: #fff;
+  border: 1px solid $color-border;
+  background: $color-white;
   overflow: hidden;
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 18px 35px rgba($color-text-primary, 0.1);
   width: 100%;
 }
 
 .schedule-search__results li + li {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid $color-border;
 }
 
 .schedule-search__results button {
@@ -138,7 +137,7 @@
 
 .schedule-search__results small {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: $color-text-muted;
 }
 
 .schedule-search__spinner {
@@ -148,7 +147,7 @@
   width: 1.1rem;
   height: 1.1rem;
   border-radius: 999px;
-  border: 2px solid rgba(15, 23, 42, 0.3);
+  border: 2px solid rgba($color-text-primary, 0.3);
   border-right-color: transparent;
   transform: translateY(-50%);
   animation: schedule-spin 0.8s linear infinite;
@@ -160,12 +159,11 @@
   gap: 0.5rem;
   padding: 0.55rem 1.25rem;
   border-radius: 999px;
-  background: linear-gradient(120deg, #fdf4ff, #eef2ff);
-  border: 1px solid rgba(99, 102, 241, 0.35);
-  color: #4338ca;
+  background: linear-gradient(120deg, rgba($color-brand-secondary, 0.12), rgba($color-brand-primary, 0.12));
+  border: 1px solid rgba($color-brand-secondary, 0.35);
+  color: $color-brand-secondary;
   font-weight: 600;
-  box-shadow: 0 18px 35px rgba(76, 29, 149, 0.15);
-  border: none;
+  box-shadow: 0 18px 35px rgba($color-brand-secondary, 0.15);
   cursor: pointer;
   font: inherit;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
@@ -173,15 +171,15 @@
 
 .schedule-search-pill small {
   font-size: 0.78rem;
-  color: #7c3aed;
+  color: $color-brand-secondary;
 }
 
 .schedule-search-pill:hover {
-  box-shadow: 0 20px 40px rgba(76, 29, 149, 0.18);
+  box-shadow: 0 20px 40px rgba($color-brand-secondary, 0.18);
 }
 
 .schedule-search-pill:focus-visible {
-  outline: 2px solid rgba(99, 102, 241, 0.6);
+  outline: 2px solid rgba($color-brand-secondary, 0.6);
   outline-offset: 3px;
 }
 
@@ -192,8 +190,8 @@
   gap: 1rem;
   padding: 1.1rem 1.25rem;
   border-radius: 24px;
-  background: linear-gradient(135deg, #eff6ff, #ede9fe);
-  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, rgba($color-brand-primary, 0.1), rgba($color-brand-secondary, 0.1));
+  box-shadow: inset 0 0 0 1px rgba($color-brand-primary, 0.2);
 }
 
 .schedule-week button {
@@ -201,20 +199,20 @@
   height: 42px;
   border-radius: 16px;
   border: none;
-  background: $white-color-opacity__80;
+  background: rgba($color-white, 0.8);
   font-size: 1.1rem;
   cursor: pointer;
-  box-shadow: 0 6px 12px rgba(67, 56, 202, 0.15);
+  box-shadow: 0 6px 12px rgba($color-brand-secondary, 0.15);
 }
 
 .schedule-week p {
   font-weight: 600;
-  color: #1e1b4b;
+  color: $color-text-primary;
 }
 
 .schedule-week span {
   font-size: 0.9rem;
-  color: #475569;
+  color: $color-text-muted;
 }
 
 .schedule-days {
@@ -225,37 +223,37 @@
 
 .schedule-day-chip {
   border-radius: 18px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid $color-border;
+  background: $color-white;
   padding: 0.6rem 0.2rem;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
   font-size: 0.9rem;
-  color: $light-gray-color;
+  color: $color-text-muted;
   cursor: pointer;
-  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 6px 12px rgba($color-text-primary, 0.05);
   min-width: 0;
 }
 
 .schedule-day-chip strong {
   font-size: 1.1rem;
-  color: #0f172a;
+  color: $color-text-primary;
 }
 
 .schedule-day-chip--active {
-  background: #306eff;
-  color: #fff;
+  background: $color-brand-primary;
+  color: $color-white;
   border-color: transparent;
 }
 
 .schedule-day-chip--active strong {
-  color: #fff;
+  color: $color-white;
 }
 
 .schedule-day-chip--today {
-  box-shadow: 0 0 0 0.5px #0f172a inset;
+  box-shadow: 0 0 0 0.5px $color-text-primary inset;
 }
 
 .schedule-day-info {
@@ -265,25 +263,25 @@
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-radius: 20px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: $color-surface;
+  border: 1px solid $color-border;
 }
 
 .schedule-day-info__label {
   font-size: 0.9rem;
-  color: #64748b;
+  color: $color-text-muted;
   text-transform: capitalize;
 }
 
 .schedule-day-info__title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: $color-text-primary;
 }
 
 .schedule-day-info__iso {
   font-size: 0.9rem;
-  color: #94a3b8;
+  color: $color-text-muted;
 }
 
 .schedule-lessons {
@@ -303,15 +301,15 @@
   gap: 0.85rem;
   padding: 1rem;
   border-radius: 24px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  box-shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
+  border: 1px solid $color-border;
+  background: $color-white;
+  box-shadow: 0 20px 35px rgba($color-text-primary, 0.08);
 }
 
 .schedule-lesson-card--current {
   border-color: transparent;
-  background: linear-gradient(135deg, #eef2ff, #fdf4ff);
-  box-shadow: 0 25px 45px rgba(67, 56, 202, 0.18);
+  background: linear-gradient(135deg, rgba($color-brand-primary, 0.1), rgba($color-brand-secondary, 0.1));
+  box-shadow: 0 25px 45px rgba($color-brand-secondary, 0.18);
 }
 
 .schedule-lesson-card--past {
@@ -330,13 +328,13 @@
   align-items: center;
   gap: 0.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: $color-text-primary;
   font-size: 1.05rem;
   white-space: nowrap;
 }
 
 .schedule-lesson-card__time span:last-child {
-  color: #737373;
+  color: $color-text-muted;
   font-weight: 600;
 }
 
@@ -373,32 +371,32 @@
 }
 
 .schedule-chip--kind {
-  background: rgba(59, 130, 246, 0.15);
-  color: #1d4ed8;
+  background: rgba($color-brand-primary, 0.15);
+  color: $color-brand-primary;
 }
 
 .schedule-chip--ghost {
-  background: rgba(15, 23, 42, 0.08);
-  color: #0f172a;
+  background: rgba($color-text-primary, 0.08);
+  color: $color-text-primary;
 }
 
 .schedule-chip--now {
-  background: rgba(34, 197, 94, 0.15);
-  color: #15803d;
+  background: rgba($color-success, 0.15);
+  color: $color-success;
 }
 
 .schedule-chip--countdown {
-  background: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
+  background: rgba($color-brand-primary, 0.12);
+  color: $color-brand-primary;
 }
 
 .schedule-lesson-card__title {
   font-size: 1.15rem;
-  color: #0f172a;
+  color: $color-text-primary;
 }
 
 .schedule-lesson-card__subtitle {
-  color: #6b7280;
+  color: $color-text-muted;
   font-size: 0.95rem;
 }
 
@@ -407,12 +405,12 @@
   align-items: baseline;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: #475569;
+  color: $color-text-muted;
 }
 
 .schedule-lesson-card__label {
   min-width: 110px;
-  color: #94a3b8;
+  color: $color-text-muted;
   font-size: 0.85rem;
 }
 
@@ -430,29 +428,29 @@
 
 .schedule-lesson-card__links a {
   font-size: 0.85rem;
-  color: #004cff;
+  color: $color-brand-primary;
   text-decoration: none;
   padding: 0.3rem 0.75rem;
   border-radius: 12px;
-  border: 1px solid rgba(0, 76, 255, 0.2);
+  border: 1px solid rgba($color-brand-primary, 0.2);
 }
 
 .schedule-empty {
   border-radius: 24px;
-  border: 1px dashed #cbd5f5;
+  border: 1px dashed rgba($color-brand-primary, 0.3);
   padding: 1.25rem;
   text-align: center;
-  background: #f8fafc;
+  background: $color-surface;
 }
 
 .schedule-empty__title {
   font-weight: 600;
-  color: #0f172a;
+  color: $color-text-primary;
 }
 
 .schedule-empty__subtitle {
   margin-top: 0.25rem;
-  color: #6b7280;
+  color: $color-text-muted;
   font-size: 0.95rem;
 }
 
@@ -465,7 +463,7 @@
 .schedule-skeleton__row {
   height: 92px;
   border-radius: 24px;
-  background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+  background: linear-gradient(90deg, $color-border, $color-surface, $color-border);
   background-size: 200% 100%;
   animation: schedule-sheen 1.6s linear infinite;
 }

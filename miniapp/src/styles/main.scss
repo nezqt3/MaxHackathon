@@ -1,39 +1,6 @@
-@import "./variables";
-
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-  font-family: $nunito;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-}
-
-body {
-  scrollbar-width: none;
-  overscroll-behavior: contain;
-}
-
-body::-webkit-scrollbar {
-  display: none;
-}
-
-.screen,
-.schedule-lessons {
-  scrollbar-width: none;
-}
-
-.screen::-webkit-scrollbar,
-.schedule-lessons::-webkit-scrollbar {
-  display: none;
-}
-
-@import "./start-screen.scss";
-@import "./app-shell.scss";
-@import "./choose-university.scss";
-@import "./schedule-screen.scss";
-@import "./services-screen.scss";
+@use "./base";
+@use "./start-screen";
+@use "./app-shell";
+@use "./choose-university";
+@use "./schedule-screen";
+@use "./services-screen";

@@ -1,10 +1,17 @@
 import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import ActivitiesService from "../services/ActivitiesService";
 import CareerService from "../services/CareerService";
 import DeanOfficeService from "../services/DeanOfficeService";
 import DormService from "../services/DormService";
 import LibraryService from "../services/LibraryService";
-
+import {
+  getServiceCardMotion,
+  servicesDetailMotion,
+  servicesOverviewMotion,
+  servicesTapFeedback,
+  servicesDetailContentMotion,
+} from "../../animations/ServicesAnimations";
 
 const SERVICE_COMPONENTS = {
   "dean-office": DeanOfficeService,
@@ -101,119 +108,147 @@ const ServicesScreen = () => {
 
   return (
     <section className={`screen services-screen${activeService ? " services-screen--detail" : ""}`}>
-      {activeService ? (
-        <div className="services-detail">
-          <button
-            type="button"
-            className="services-detail__back"
-            onClick={() => setActiveServiceId(null)}
+      <AnimatePresence mode="wait" initial={false}>
+        {activeService ? (
+          <motion.div
+            key="services-detail"
+            className="services-detail"
+            initial={servicesDetailMotion.initial}
+            animate={servicesDetailMotion.animate}
+            exit={servicesDetailMotion.exit}
+            transition={servicesDetailMotion.transition}
           >
-            <span aria-hidden="true">←</span>
-            Назад к сервисам
-          </button>
+            <motion.button
+              type="button"
+              className="services-detail__back"
+              onClick={() => setActiveServiceId(null)}
+              whileTap={servicesTapFeedback}
+            >
+              <span aria-hidden="true">←</span>
+              Назад к сервисам
+            </motion.button>
 
-          <div className="services-detail__header">
-            <p className="services-screen__eyebrow">Сервис</p>
-            <h2 className="screen__title">{activeService.title}</h2>
-            {activeService.description && (
-              <p className="screen__subtitle">{activeService.description}</p>
+            <div className="services-detail__header">
+              <p className="services-screen__eyebrow">Сервис</p>
+              <h2 className="screen__title">{activeService.title}</h2>
+              {activeService.description && (
+                <p className="screen__subtitle">{activeService.description}</p>
+              )}
+            </div>
+
+            {activeService.features?.length > 0 && (
+              <ul className="services-detail__feature-list">
+                {activeService.features.map((feature, index) => (
+                  <li key={`${activeService.id}-detail-${index}`}>{feature}</li>
+                ))}
+              </ul>
             )}
-          </div>
 
-          {activeService.features?.length > 0 && (
-            <ul className="services-detail__feature-list">
-              {activeService.features.map((feature, index) => (
-                <li key={`${activeService.id}-detail-${index}`}>{feature}</li>
-              ))}
-            </ul>
-          )}
+            <motion.div
+              className="services-detail__content"
+              initial={servicesDetailContentMotion.initial}
+              animate={servicesDetailContentMotion.animate}
+              transition={servicesDetailContentMotion.transition}
+            >
+              {ActiveServiceComponent ? (
+                <ActiveServiceComponent />
+              ) : (
+                <p className="service-detail-card__placeholder">Раздел в разработке.</p>
+              )}
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="services-overview"
+            className="services-screen__overview"
+            initial={servicesOverviewMotion.initial}
+            animate={servicesOverviewMotion.animate}
+            exit={servicesOverviewMotion.exit}
+            transition={servicesOverviewMotion.transition}
+          >
+            <div className="services-screen__header">
+              <h2 className="screen__title">Сервисы кампуса</h2>
+              <p className="screen__subtitle">Различные решения для вашего удобства</p>
+            </div>
 
-          <div className="services-detail__content">
-            {ActiveServiceComponent ? (
-              <ActiveServiceComponent />
-            ) : (
-              <p className="service-detail-card__placeholder">Раздел в разработке.</p>
-            )}
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="services-screen__header">
-            <h2 className="screen__title">Сервисы кампуса</h2>
-            <p className="screen__subtitle">Различные решения для вашего удобства</p>
-          </div>
+            <div className="services-grid">
+              {SERVICES.map((service, index) => {
+                const cardMotion = getServiceCardMotion(index);
+                const initial = service.title?.[0]?.toUpperCase() ?? "";
+                const isDisabled = Boolean(service.disabled);
 
-          <div className="services-grid">
-            {SERVICES.map((service) => {
-              const initial = service.title?.[0]?.toUpperCase() ?? "";
-              const isDisabled = Boolean(service.disabled);
-
-              return (
-                <article
-                  key={service.id}
-                  className={`services-card${isDisabled ? " services-card--disabled" : ""}`}
-                  role="button"
-                  tabIndex={isDisabled ? -1 : 0}
-                  aria-label={`Открыть сервис ${service.title}`}
-                  aria-disabled={isDisabled}
-                  onClick={() => {
-                    if (isDisabled) {
-                      return;
-                    }
-                    handleOpenService(service.id);
-                  }}
-                  onKeyDown={(event) => handleCardKeyDown(event, service.id, isDisabled)}
-                  style={{
-                    "--services-accent": service.accent,
-                    "--services-accent-bg": service.accentBg,
-                    "--services-accent-border": service.accentBorder,
-                  }}
-                >
-                  <div className="services-card__icon" aria-hidden="true">
-                    {initial}
-                  </div>
-
-                  <div className="services-card__content">
-                    <div className="services-card__header">
-                      <h3 className="services-card__title">{service.title}</h3>
+                return (
+                  <motion.article
+                    key={service.id}
+                    className={`services-card${isDisabled ? " services-card--disabled" : ""}`}
+                    role="button"
+                    tabIndex={isDisabled ? -1 : 0}
+                    aria-label={`Открыть сервис ${service.title}`}
+                    aria-disabled={isDisabled}
+                    onClick={() => {
+                      if (isDisabled) {
+                        return;
+                      }
+                      handleOpenService(service.id);
+                    }}
+                    onKeyDown={(event) => handleCardKeyDown(event, service.id, isDisabled)}
+                    style={{
+                      "--services-accent": service.accent,
+                      "--services-accent-bg": service.accentBg,
+                      "--services-accent-border": service.accentBorder,
+                    }}
+                    initial={cardMotion.initial}
+                    animate={cardMotion.animate}
+                    transition={cardMotion.transition}
+                    whileTap={servicesTapFeedback}
+                  >
+                    <div className="services-card__icon" aria-hidden="true">
+                      {initial}
                     </div>
 
-                    {service.description && (
-                      <p className="services-card__description">{service.description}</p>
-                    )}
+                    <div className="services-card__content">
+                      <div className="services-card__header">
+                        <h3 className="services-card__title">{service.title}</h3>
+                      </div>
 
-                    <ul className="services-card__features">
-                      {service.features.map((feature, index) => (
-                        <li key={`${service.id}-${index}`} className="services-card__feature">
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
+                      {service.description && (
+                        <p className="services-card__description">{service.description}</p>
+                      )}
 
-                    <button
-                      type="button"
-                      className="services-card__cta"
-                      disabled={isDisabled}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        if (isDisabled) {
-                          return;
-                        }
-                        handleOpenService(service.id);
-                      }}
-                    >
-                      {isDisabled ? "Скоро" : "Открыть"}
-                      <span aria-hidden="true" className="services-card__cta-icon">
-                        →
-                      </span>
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </>
-      )}
+                      <ul className="services-card__features">
+                        {service.features.map((feature, index) => (
+                          <li key={`${service.id}-${index}`} className="services-card__feature">
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <motion.button
+                        type="button"
+                        className="services-card__cta"
+                        disabled={isDisabled}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (isDisabled) {
+                            return;
+                          }
+                          handleOpenService(service.id);
+                        }}
+                        whileTap={servicesTapFeedback}
+                      >
+                        {isDisabled ? "Скоро" : "Открыть"}
+                        <span aria-hidden="true" className="services-card__cta-icon">
+                          →
+                        </span>
+                      </motion.button>
+                    </div>
+                  </motion.article>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

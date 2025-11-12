@@ -1,3 +1,4 @@
+@use "./variables" as *;
 :root {
   /* Подстрой по фактической высоте меню, если нужно */
   --menu-height: 72px;
@@ -8,7 +9,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: $color-white;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
@@ -17,7 +18,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: $color-white;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
@@ -51,7 +52,7 @@
 .screen {
   width: 100%;
   height: var(--screen-height);
-  background: #ffffff;
+  background: $color-white;
   border-radius: 32px 32px 0 0; /* скругления только сверху */
   padding: 2rem; /* внутренние отступы экрана остаются */
   display: flex;
@@ -70,12 +71,12 @@
 .screen__title {
   font-size: 2rem;
   font-weight: 700;
-  color: #0f172a;
+  color: $color-text-primary;
 }
 
 .screen__subtitle {
   font-size: 1rem;
-  color: #6b7280;
+  color: $color-text-muted;
 }
 
 .menu-bar {
@@ -86,10 +87,10 @@
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0));
-  background: #ffffff;
+  background: $color-white;
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
-  box-shadow: 0 -10px 35px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 -10px 35px rgba($color-text-primary, 0.08);
 }
 
 /* Фиксируем расчетную высоту меню под переменную, чтобы calc() сходился */
@@ -114,7 +115,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  color: #9ca3af;
+  color: $color-text-muted;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -136,8 +137,8 @@
 }
 
 .menu-bar__button--active {
-  color: #004cff;
-  background: #ffffff;
+  color: $color-brand-primary;
+  background: $color-white;
   transform: translateY(-6px);
 }
 

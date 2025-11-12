@@ -1,0 +1,33 @@
+@use "./variables" as *;
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: $nunito;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+.screen,
+.schedule-lessons {
+  scrollbar-width: none;
+}
+
+.screen::-webkit-scrollbar,
+.schedule-lessons::-webkit-scrollbar {
+  display: none;
+}

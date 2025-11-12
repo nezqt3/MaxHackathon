@@ -9,7 +9,7 @@ export const MENU_ITEMS = [
   { key: "account", Icon: UserIcon },
 ];
 
-const ACTIVE_COLOR = "#004CFF";
+const ACTIVE_COLOR = "#3673ff";
 const INACTIVE_COLOR = "#9CA3AF";
 
 const MenuBar = ({ activeItem, onChange = () => {} }) => (

@@ -1,5 +1,4 @@
-@import "./variables";
-
+@use "./variables" as *;
 @media (max-width: 500px) {
   .start-screen {
     padding: 0 20px;
@@ -7,23 +6,23 @@
     &__logo-div {
       width: 134px;
       height: 134px;
-      background-color: white;
+      background-color: $color-white;
       border-radius: 50%;
       padding: 12px 6px;
       margin: 190px auto 40px auto;
       align-items: center;
-      box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.16);
+      box-shadow: 0 3px 8px 0 rgba($color-text-primary, 0.16);
       text-align: center;
     }
 
     &__logo {
-      stroke: $blue-color;
+      stroke: $color-brand-primary;
       rotate: 23deg;
       width: 110px;
     }
 
     &__title {
-      font-family: "Raleway";
+      font-family: $raleway;
       font-style: normal;
       font-weight: 700;
       font-size: 52px;
@@ -32,7 +31,7 @@
       letter-spacing: -0.52px;
       margin: 0 auto;
       margin-bottom: 2px;
-      color: $black-color;
+      color: $color-text-primary;
     }
 
     &__text {
@@ -42,7 +41,7 @@
       line-height: 33px;
       text-align: center;
       margin: 0 auto;
-      color: $black-color;
+      color: $color-text-primary;
       margin-bottom: 106px;
     }
 
@@ -57,8 +56,8 @@
       border: none;
       padding: 15px 0;
       border-radius: 16px;
-      background-color: $blue-color;
-      color: $white-other-color;
+      background-color: $color-brand-primary;
+      color: $color-surface;
     }
   }
 }
