@@ -70,7 +70,11 @@ const searchSchedule = async (term) => {
     }));
 };
 
-const getSchedule = async (id, type, startTime, endTime) => {
+const getSchedule = async ({ id, type, startTime, endTime }) => {
+  if (!id || !type || !startTime || !endTime) {
+    throw new Error("Нужны параметры id, type, startTime и endTime");
+  }
+
   const data = await fetchJson(
     `https://ruz.fa.ru/api/schedule/${type}/${id}?start=${startTime}&finish=${endTime}&lng=1`
   );

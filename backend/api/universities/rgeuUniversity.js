@@ -4,12 +4,20 @@ const UNIVERSITY_ID = "rgeu-university";
 const TITLE = "Ростовский государственный экономический университет (РИНХ)";
 const BASE_URL = "https://rsue.ru";
 
-const getScheduleRgeu = async (group) => {
+const getScheduleRgeu = async ({ groupLabel, profileType, start, end }) => {
   const response = await fetch(
-    `https://rasp-api.rsue.ru/api/v1/schedule/lessons/${group}/`
+    `https://rasp-api.rsue.ru/api/v1/schedule/lessons/${encodeURIComponent(
+      groupLabel
+    )}/`
   );
 
-  return response.json();
+  if (!response.ok) {
+    throw new Error(`Ошибка загрузки расписания: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  return data;
 };
 
 const searchSchedule = async (group) => {
@@ -109,8 +117,8 @@ const getNewsList = async () => {
   return getNewsRgeu();
 };
 
-const getSchedule = async (group) => {
-  return getScheduleRgeu(group);
+const getSchedule = async (params) => {
+  return getScheduleRgeu(params);
 };
 
 module.exports = {

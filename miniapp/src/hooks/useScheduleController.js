@@ -196,7 +196,8 @@ const useScheduleController = () => {
           selectedProfile.type,
           activeIso,
           activeIso,
-          universityId
+          universityId,
+          selectedProfile.label || null
         );
 
         if (isUnmountedRef.current) return;
@@ -280,7 +281,13 @@ const useScheduleController = () => {
         setIsSubmittingSearch(false);
       }
     },
-    [handleSelectProfile, isEditingProfile, searchQuery, selectedProfile, universityId]
+    [
+      handleSelectProfile,
+      isEditingProfile,
+      searchQuery,
+      selectedProfile,
+      universityId,
+    ]
   );
 
   const handleEnterEditMode = useCallback(() => {

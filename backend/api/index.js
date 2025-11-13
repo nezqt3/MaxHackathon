@@ -58,20 +58,29 @@ app.get("/api/:universityId/schedule/search", scheduleSearchHandler);
 app.get("/api/schedule/search", scheduleSearchHandler);
 
 const scheduleHandler = withUniversity(async (req, res, university) => {
-  const profileId = req.params.profileId || req.query.profileId;
-  const profileType = req.params.profileType || req.query.profileType;
-  const start = req.query.start || req.query.startTime;
-  const end = req.query.finish || req.query.end || req.query.endTime;
+  const params = { ...req.query, ...req.params };
 
-  if (!profileId || !profileType || !start || !end) {
-    return res.status(400).json({
-      error:
-        "Параметры profileId, profileType и даты (start & end) обязательны",
-    });
+  try {
+    let schedule;
+
+    if (university.id === "rgeu-university" && params.groupLabel) {
+      schedule = await university.getSchedule({
+        groupLabel: params.groupLabel,
+      });
+    } else {
+      schedule = await university.getSchedule({
+        id: params.profileId,
+        type: params.profileType,
+        startTime: params.start,
+        endTime: params.end,
+      });
+    }
+
+    res.json(schedule);
+  } catch (error) {
+    console.error("Ошибка при получении расписания:", error);
+    res.status(500).json({ error: error.message });
   }
-
-  const schedule = await university.getSchedule(profileId, profileType, start, end);
-  res.json(schedule);
 });
 
 app.get("/api/:universityId/schedule", scheduleHandler);
@@ -115,10 +124,7 @@ const deanOfficeHandler = withUniversity(async (req, res, university) => {
   res.json(bids);
 });
 
-app.get(
-  "/api/:universityId/services/dean-office/bids",
-  deanOfficeHandler
-);
+app.get("/api/:universityId/services/dean-office/bids", deanOfficeHandler);
 app.get("/api/services/dean-office/bids", deanOfficeHandler);
 
 const libraryHandler = withUniversity(async (req, res, university) => {
