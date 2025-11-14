@@ -1,5 +1,9 @@
 const express = require("express");
-const { saveAccount, getAccountByPublicId } = require("../storage/accountsStore");
+const {
+  saveAccount,
+  getAccountByPublicId,
+  getAccountByUserId,
+} = require("../storage/accountsStore");
 const {
   DEFAULT_UNIVERSITY_ID,
   getUniversityById,
@@ -108,6 +112,23 @@ router.get("/:accountId", (req, res) => {
     return res.json(account);
   } catch (error) {
     console.error("Fetch account failed", error);
+    return res.status(500).json({ error: "Не удалось получить данные" });
+  }
+});
+
+router.get("/", (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) {
+    return res.status(400).json({ error: "Не передан идентификатор" });
+  }
+  try {
+    const account = getAccountByUserId(String(userId));
+    if (!account) {
+      return res.status(404).json({ error: "Аккаунт не найден" });
+    }
+    return res.json(account);
+  } catch (error) {
+    console.error("Fetch account by user failed", error);
     return res.status(500).json({ error: "Не удалось получить данные" });
   }
 });

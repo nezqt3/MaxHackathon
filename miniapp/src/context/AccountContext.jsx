@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   fetchAccountRequest,
+  fetchAccountByUserIdRequest,
   registerAccountRequest,
 } from "../methods/account/api";
 import {
@@ -229,7 +230,8 @@ export const AccountProvider = ({ children }) => {
     }
   }, [accountId, maxUser, updateAccountId]);
 
-  const resolvedAccountId = maxUser?.userId || accountId || null;
+  const resolvedUserId = maxUser?.userId || null;
+  const contextUserId = resolvedUserId || accountId || null;
 
   const syncScheduleFromAccount = useCallback(
     (payload) => {
@@ -251,15 +253,24 @@ export const AccountProvider = ({ children }) => {
   );
 
   const loadAccount = useCallback(
-    async (targetId) => {
-      if (!targetId) {
+    async ({ userId: targetUserId = null, accountId: targetAccountId = null }) => {
+      if (!targetUserId && !targetAccountId) {
         setAccount(null);
         setIsInitializing(false);
         return null;
       }
       setIsInitializing(true);
       try {
-        const data = await fetchAccountRequest(targetId);
+        const data = targetUserId
+          ? await fetchAccountByUserIdRequest(targetUserId)
+          : await fetchAccountRequest(targetAccountId);
+        if (!data) {
+          setAccount(null);
+          if (targetAccountId) {
+            updateAccountId(null);
+          }
+          return null;
+        }
         setAccount(data);
         syncScheduleFromAccount(data);
         return data;
@@ -271,12 +282,21 @@ export const AccountProvider = ({ children }) => {
         setIsInitializing(false);
       }
     },
-    [syncScheduleFromAccount],
+    [syncScheduleFromAccount, updateAccountId],
   );
 
   useEffect(() => {
-    loadAccount(resolvedAccountId);
-  }, [loadAccount, resolvedAccountId]);
+    if (resolvedUserId) {
+      loadAccount({ userId: resolvedUserId });
+      return;
+    }
+    if (accountId) {
+      loadAccount({ accountId });
+      return;
+    }
+    setAccount(null);
+    setIsInitializing(false);
+  }, [accountId, loadAccount, resolvedUserId]);
 
   const handleSuccess = useCallback(
     (payload) => {
@@ -291,7 +311,7 @@ export const AccountProvider = ({ children }) => {
 
   const registerAccount = useCallback(
     async (form) => {
-      const targetUserId = maxUser?.userId || accountId;
+      const targetUserId = resolvedUserId || accountId;
       if (!targetUserId) {
         const idError = new Error(
           "Не удалось определить MAX ID. Откройте мини-приложение из чата MAX.",
@@ -316,20 +336,23 @@ export const AccountProvider = ({ children }) => {
         setIsProcessing(false);
       }
     },
-    [accountId, handleSuccess, maxUser?.userId],
+    [accountId, handleSuccess, resolvedUserId],
   );
 
   const refreshAccount = useCallback(() => {
-    if (!resolvedAccountId) {
-      return Promise.resolve(null);
+    if (resolvedUserId) {
+      return loadAccount({ userId: resolvedUserId });
     }
-    return loadAccount(resolvedAccountId);
-  }, [loadAccount, resolvedAccountId]);
+    if (accountId) {
+      return loadAccount({ accountId });
+    }
+    return Promise.resolve(null);
+  }, [accountId, loadAccount, resolvedUserId]);
 
   const value = useMemo(
     () => ({
       account,
-      userId: resolvedAccountId,
+      userId: contextUserId,
       maxUser,
       isInitializing,
       isProcessing,
@@ -339,7 +362,7 @@ export const AccountProvider = ({ children }) => {
     }),
     [
       account,
-      resolvedAccountId,
+      contextUserId,
       maxUser,
       error,
       isProcessing,

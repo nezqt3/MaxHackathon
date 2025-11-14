@@ -27,5 +27,18 @@ export const registerAccountRequest = async (data) => {
 
 export const fetchAccountRequest = async (accountId) => {
   const response = await fetch(`${API_BASE_URL}/api/accounts/${accountId}`);
+  if (response.status === 404) {
+    return null;
+  }
+  return handleResponse(response);
+};
+
+export const fetchAccountByUserIdRequest = async (userId) => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/accounts?userId=${encodeURIComponent(userId)}`,
+  );
+  if (response.status === 404) {
+    return null;
+  }
   return handleResponse(response);
 };
