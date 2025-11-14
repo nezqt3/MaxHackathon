@@ -74,14 +74,14 @@ const ProjectDetailsModal = ({
   const resolvedRoleId = selectedRoleId || availableRoles[0]?.id || "";
 
   const handleJoin = () => {
-    if (!currentUser || !resolvedRoleId) {
+    if (!resolvedRoleId) {
       return;
     }
     onJoin?.(project.id, resolvedRoleId);
   };
 
   const handleRequest = () => {
-    if (!currentUser || !resolvedRoleId) {
+    if (!resolvedRoleId) {
       return;
     }
     onSendRequest?.(project.id, resolvedRoleId, message);
@@ -247,7 +247,7 @@ const ProjectDetailsModal = ({
             <button
               type="button"
               className="project-modal__button"
-              disabled={!currentUser || !resolvedRoleId}
+              disabled={!resolvedRoleId}
               onClick={handleJoin}
             >
               Вступить
@@ -256,7 +256,7 @@ const ProjectDetailsModal = ({
             <button
               type="button"
               className="project-modal__button"
-              disabled={!currentUser || !resolvedRoleId || userRequest?.status === "pending"}
+              disabled={!resolvedRoleId || userRequest?.status === "pending"}
               onClick={handleRequest}
             >
               Отправить заявку
