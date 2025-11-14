@@ -32,9 +32,36 @@ const fetchJson = async (url) => {
   return response.json();
 };
 
+function parseDMY(dateStr) {
+  if (dateStr === null) return undefined;
+  const [day, month, year] = dateStr.split(".");
+  return new Date(`${year}-${month}-${day}`);
+}
+
+function convertNameOfDay(dayName) {
+  switch (dayName.slice(0, 2)) {
+    case "По":
+      return 1;
+    case "Вт":
+      return 2;
+    case "Ср":
+      return 3;
+    case "Че":
+      return 4;
+    case "Пя":
+      return 5;
+    case "Су":
+      return 6;
+    case "Во":
+      return 7;
+  }
+}
+
 module.exports = {
   fetchJson,
   fetchText,
+  convertNameOfDay,
   sanitizeText,
+  parseDMY,
   ensureAbsoluteUrl,
 };

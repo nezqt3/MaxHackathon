@@ -33,7 +33,7 @@ export const parseSchedule = async (
       response = await fetch(
         `${API_BASE_URL}/api/${universityId}/schedule?groupLabel=${encodeURIComponent(
           groupLabel
-        )}`
+        )}&start=${startIso}&end=${endIso}`
       );
     } else {
       response = await fetch(
@@ -42,7 +42,6 @@ export const parseSchedule = async (
     }
     if (!response.ok) throw new Error("Ошибка загрузки расписания");
     const data = await response.json();
-    console.log(data);
     return Array.isArray(data) ? data : [];
   } catch (e) {
     console.error("parseSchedule error:", e);

@@ -1,4 +1,8 @@
-const { fetchText } = require("./methods/usefulMethods");
+const {
+  fetchText,
+  parseDMY,
+  convertNameOfDay,
+} = require("./methods/usefulMethods");
 
 const UNIVERSITY_ID = "rgeu-university";
 const TITLE = "Ростовский государственный экономический университет (РИНХ)";
@@ -14,10 +18,50 @@ const getScheduleRgeu = async ({ groupLabel, profileType, start, end }) => {
   if (!response.ok) {
     throw new Error(`Ошибка загрузки расписания: ${response.status}`);
   }
-
   const data = await response.json();
 
-  return data;
+  const weeks = data.weeks;
+  const pairs = [];
+
+  for (let w = 0; w < weeks.length; w++) {
+    const days = weeks[w].days;
+
+    for (let d = 0; d < days.length; d++) {
+      const currentDay = days[d];
+      const datePair = parseDMY(currentDay.date);
+
+      if (datePair < new Date(start) || datePair > new Date(end)) {
+        continue;
+      }
+
+      const dayPairs = currentDay.pairs;
+
+      for (let p = 0; p < dayPairs.length; p++) {
+        const pair = dayPairs[p];
+
+        console.log(pair.lessons);
+
+        if (pair.lessons.length !== 0) {
+          pairs.push({
+            auditoriums: [pair.lessons[0].audience],
+            beginLesson: pair.startTime,
+            endLesson: pair.endTime,
+            disciplines: [pair.lessons[0].subject],
+            kindOfWorks: [pair.lessons[0].kind.name],
+            lecturers: [pair.lessons[0].teacher.name],
+            lecturerEmails: ["none"],
+            streams: [pair.lessons[0].group],
+            groups: [pair.lessons[0].group],
+            dayOfWeek: convertNameOfDay(currentDay.name),
+            dayOfWeekString: currentDay.name,
+            urls: [],
+          });
+        }
+      }
+    }
+  }
+
+  return pairs;
 };
 
 const searchSchedule = async (group) => {

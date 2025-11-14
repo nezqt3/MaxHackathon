@@ -67,6 +67,8 @@ const scheduleHandler = withUniversity(async (req, res, university) => {
     if (university.id === "rgeu-university" && params.groupLabel) {
       schedule = await university.getSchedule({
         groupLabel: params.groupLabel,
+        start: params.start,
+        end: params.end,
       });
     } else {
       schedule = await university.getSchedule({
