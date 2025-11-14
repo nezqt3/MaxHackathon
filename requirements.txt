@@ -1,7 +1,7 @@
-"better-sqlite3": "^9.4.1",
 "cors": "^2.8.5",
 "express": "^5.1.0",
-"node-fetch": "^3.3.2"
+"node-fetch": "^3.3.2",
+"firebase-admin": "^12.0.0"
 
 "@maxhub/max-bot-api": "^0.2.1",
 "@maxhub/max-ui": "^0.1.12",

@@ -46,7 +46,7 @@ const sanitizeScheduleProfile = (profile) => {
   };
 };
 
-router.post("/register", (req, res) => {
+router.post("/register", async (req, res) => {
   const {
     userId,
     fullName,
@@ -91,7 +91,7 @@ router.post("/register", (req, res) => {
   };
 
   try {
-    const account = saveAccount(prepared);
+    const account = await saveAccount(prepared);
     return res.json(account);
   } catch (error) {
     console.error("Register account failed", error);
@@ -99,13 +99,13 @@ router.post("/register", (req, res) => {
   }
 });
 
-router.get("/:accountId", (req, res) => {
+router.get("/:accountId", async (req, res) => {
   const accountId = req.params.accountId;
   if (!accountId) {
     return res.status(400).json({ error: "Не передан идентификатор" });
   }
   try {
-    const account = getAccountByPublicId(accountId);
+    const account = await getAccountByPublicId(accountId);
     if (!account) {
       return res.status(404).json({ error: "Аккаунт не найден" });
     }
@@ -116,13 +116,13 @@ router.get("/:accountId", (req, res) => {
   }
 });
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   const userId = req.query.userId;
   if (!userId) {
     return res.status(400).json({ error: "Не передан идентификатор" });
   }
   try {
-    const account = getAccountByUserId(String(userId));
+    const account = await getAccountByUserId(String(userId));
     if (!account) {
       return res.status(404).json({ error: "Аккаунт не найден" });
     }

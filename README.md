@@ -7,7 +7,7 @@
 | Путь              | Назначение                                                                                                           | Стек                                                |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `backend/textbot` | Нативный бот на `@maxhub/max-bot-api`, который отдаёт стартовую кнопку мини-приложения и собирает `startapp` payload | Node.js 22, `@maxhub/max-bot-api`, `dotenv`         |
-| `backend/api`     | Express API, которое проксирует расписание, новости, календарь и заявки вузов, а также хранит аккаунты в SQLite      | Node.js 20+, Express 5, `node-fetch`, `sqlite3` CLI |
+| `backend/api`     | Express API, которое проксирует расписание, новости, календарь и заявки вузов, а также хранит аккаунты и проекты в Firestore | Node.js 20+, Express 5, `node-fetch`, `firebase-admin` |
 | `miniapp`         | React-приложение NoMissed с MAX UI: расписание, сервисы кампуса, новости, проекты, личный кабинет                    | React 18, `motion` (Framer), SCSS, `@maxhub/max-ui` |
 | `Dockerfile`      | Сборка контейнера с текстовым ботом                                                                                  | Node 22 base image                                  |
 
@@ -24,7 +24,7 @@
 ## Требования
 
 - Node.js >= 20 и npm >= 10 для всех пакетов.
-- Системная утилита `sqlite3` (macOS и большинство Linux дистрибутивов ставят её по умолчанию).
+- Сервисный аккаунт Firebase (переменные `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`).
 - Токен и username бота в MAX Business.
 - Любой HTTPS-хостинг для мини-приложения (Vercel, GitHub Pages и т.д.).
 

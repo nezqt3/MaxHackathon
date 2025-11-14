@@ -1,252 +1,150 @@
-const { execute, query } = require("./sqliteClient");
+const { getFirestore } = require("./firebaseClient");
 
-let isInitialized = false;
+const COLLECTION_NAME = "accounts";
 
-const ensureSchema = () => {
-  if (isInitialized) {
-    return;
-  }
+const getCollection = () => getFirestore().collection(COLLECTION_NAME);
 
-  execute("PRAGMA journal_mode=WAL;");
-  execute(`
-    CREATE TABLE IF NOT EXISTS accounts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      public_id TEXT NOT NULL UNIQUE,
-      max_user_id TEXT UNIQUE,
-      full_name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      university_id TEXT NOT NULL,
-      university_title TEXT NOT NULL,
-      course TEXT NOT NULL,
-      group_label TEXT NOT NULL,
-      schedule_profile_id TEXT,
-      schedule_profile_type TEXT,
-      schedule_profile_label TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-  execute(
-    `CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email);`,
-  );
-  execute(
-    `CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_public_id ON accounts(public_id);`,
-  );
-
-  const columns = query(`PRAGMA table_info(accounts);`);
-  const columnNames = new Set(columns.map((column) => column.name));
-
-  if (!columnNames.has("password_hash")) {
-    execute(`ALTER TABLE accounts ADD COLUMN password_hash TEXT;`);
-  }
-  if (!columnNames.has("password_salt")) {
-    execute(`ALTER TABLE accounts ADD COLUMN password_salt TEXT;`);
-  }
-  if (!columnNames.has("max_user_id")) {
-    execute(`ALTER TABLE accounts ADD COLUMN max_user_id TEXT;`);
-  }
-  execute(
-    `CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(max_user_id);`,
-  );
-
-  isInitialized = true;
-};
-
-const mapRow = (row) => {
-  if (!row) {
+const normalizeScheduleProfile = (profile) => {
+  if (!profile || typeof profile !== "object") {
     return null;
   }
-
-  const scheduleProfile = row.schedule_profile_id
-    ? {
-        id: row.schedule_profile_id,
-        type: row.schedule_profile_type,
-        label: row.schedule_profile_label || row.group_label,
-      }
-    : null;
-
-  const userId = row.max_user_id || row.public_id;
-
+  if (!profile.id || !profile.type) {
+    return null;
+  }
   return {
-    id: userId,
-    userId,
-    fullName: row.full_name,
-    email: row.email,
-    universityId: row.university_id,
-    universityTitle: row.university_title,
-    course: row.course,
-    groupLabel: row.group_label,
-    scheduleProfile,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    id: String(profile.id),
+    type: String(profile.type),
+    label: profile.label ? String(profile.label) : null,
   };
 };
 
-const getAccountByPublicId = (publicId) => {
-  ensureSchema();
-  if (!publicId) {
+const mapScheduleProfile = (data = {}, fallbackLabel) => {
+  if (!data) {
     return null;
   }
-
-  const rowByUserId = query(
-    `SELECT * FROM accounts WHERE max_user_id = :publicId LIMIT 1;`,
-    {
-      publicId,
-    },
-  );
-  if (rowByUserId[0]) {
-    return mapRow(rowByUserId[0]);
-  }
-
-  const rows = query(
-    `SELECT * FROM accounts WHERE public_id = :publicId LIMIT 1;`,
-    {
-      publicId,
-    },
-  );
-  return mapRow(rows[0]);
-};
-
-const getAccountByUserId = (userId) => {
-  ensureSchema();
-  if (!userId) {
-    return null;
-  }
-  const rows = query(
-    `SELECT * FROM accounts WHERE max_user_id = :userId LIMIT 1;`,
-    {
-      userId: String(userId),
-    },
-  );
-  return mapRow(rows[0]);
-};
-
-const prepareScheduleParams = (scheduleProfile) => {
-  if (!scheduleProfile) {
+  if (data.id && data.type) {
     return {
-      scheduleProfileId: null,
-      scheduleProfileType: null,
-      scheduleProfileLabel: null,
+      id: String(data.id),
+      type: String(data.type),
+      label: data.label ? String(data.label) : fallbackLabel || null,
     };
   }
+  if (data.scheduleProfileId && data.scheduleProfileType) {
+    return {
+      id: String(data.scheduleProfileId),
+      type: String(data.scheduleProfileType),
+      label: data.scheduleProfileLabel
+        ? String(data.scheduleProfileLabel)
+        : fallbackLabel || null,
+    };
+  }
+  return null;
+};
+
+const mapAccountRecord = (record) => {
+  if (!record) {
+    return null;
+  }
+
+  const scheduleProfile = mapScheduleProfile(
+    record.scheduleProfile || record,
+    record.groupLabel,
+  );
+
+  const accountId =
+    record.userId || record.publicId || record.id || record.max_user_id;
+
+  if (!accountId) {
+    return null;
+  }
+
   return {
-    scheduleProfileId: scheduleProfile.id ?? null,
-    scheduleProfileType: scheduleProfile.type ?? null,
-    scheduleProfileLabel: scheduleProfile.label ?? null,
+    id: accountId,
+    userId: accountId,
+    fullName: record.fullName,
+    email: record.email,
+    universityId: record.universityId,
+    universityTitle: record.universityTitle,
+    course: record.course,
+    groupLabel: record.groupLabel,
+    scheduleProfile,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
   };
 };
 
-const saveAccount = (payload) => {
-  ensureSchema();
-  const {
-    userId,
-    fullName,
-    course,
-    groupLabel,
-    universityId,
-    universityTitle,
-    scheduleProfile,
-  } = payload;
+const findAccountByField = async (field, value) => {
+  if (!value) {
+    return null;
+  }
+  const snapshot = await getCollection()
+    .where(field, "==", String(value))
+    .limit(1)
+    .get();
+  if (snapshot.empty) {
+    return null;
+  }
+  return mapAccountRecord(snapshot.docs[0].data());
+};
 
+const getAccountDocument = async (docId) => {
+  if (!docId) {
+    return null;
+  }
+  const doc = await getCollection().doc(String(docId)).get();
+  if (!doc.exists) {
+    return null;
+  }
+  return mapAccountRecord(doc.data());
+};
+
+const getAccountByPublicId = async (publicId) => {
+  return (await getAccountDocument(publicId))
+    || (await findAccountByField("publicId", publicId));
+};
+
+const getAccountByUserId = async (userId) => {
+  return (await getAccountDocument(userId))
+    || (await findAccountByField("userId", userId))
+    || (await findAccountByField("max_user_id", userId));
+};
+
+const saveAccount = async (payload = {}) => {
+  const userId = String(payload.userId || "").trim();
   if (!userId) {
     throw new Error("userId is required to save an account");
   }
 
-  const normalizedUserId = String(userId);
-  const normalizedFullName = String(fullName).trim();
-  const normalizedGroup = String(groupLabel).trim();
-  const normalizedCourse = String(course ?? "").trim();
-  const fallbackEmail = `${normalizedUserId}@max-user.local`;
+  const normalizedFullName = String(payload.fullName || "").trim();
+  const normalizedGroup = String(payload.groupLabel || "").trim();
+  const normalizedCourse = String(payload.course ?? "").trim();
+  const scheduleProfile = normalizeScheduleProfile(payload.scheduleProfile);
+  const now = new Date().toISOString();
 
-  const scheduleParams = prepareScheduleParams(scheduleProfile);
+  const existing = await getAccountByUserId(userId);
+  const createdAt = existing?.createdAt || now;
+  const email = payload.email
+    ? String(payload.email).trim()
+    : existing?.email || `${userId}@max-user.local`;
 
-  const existing =
-    getAccountByUserId(normalizedUserId) ||
-    getAccountByPublicId(normalizedUserId);
-  if (existing) {
-    execute(
-      `
-        UPDATE accounts
-        SET
-          full_name = :fullName,
-          course = :course,
-          group_label = :groupLabel,
-          university_id = :universityId,
-          university_title = :universityTitle,
-          schedule_profile_id = :scheduleProfileId,
-          schedule_profile_type = :scheduleProfileType,
-          schedule_profile_label = :scheduleProfileLabel,
-          email = :email,
-          max_user_id = :userId,
-          password_hash = NULL,
-          password_salt = NULL,
-          updated_at = datetime('now')
-        WHERE public_id = :publicId OR max_user_id = :userId;
-      `,
-      {
-        publicId: existing.id,
-        userId: normalizedUserId,
-        email: fallbackEmail,
-        fullName: normalizedFullName,
-        course: normalizedCourse,
-        groupLabel: normalizedGroup,
-        universityId,
-        universityTitle,
-        ...scheduleParams,
-      },
-    );
-    return getAccountByUserId(normalizedUserId);
-  }
+  const record = {
+    id: userId,
+    userId,
+    publicId: existing?.id || userId,
+    fullName: normalizedFullName,
+    email,
+    universityId: payload.universityId,
+    universityTitle: payload.universityTitle,
+    course: normalizedCourse,
+    groupLabel: normalizedGroup,
+    scheduleProfile: scheduleProfile || existing?.scheduleProfile || null,
+    createdAt,
+    updatedAt: now,
+  };
 
-  const publicId = normalizedUserId;
+  await getCollection().doc(userId).set(record);
 
-  execute(
-    `
-      INSERT INTO accounts (
-        public_id,
-        max_user_id,
-        full_name,
-        email,
-        university_id,
-        university_title,
-        course,
-        group_label,
-        schedule_profile_id,
-        schedule_profile_type,
-        schedule_profile_label,
-        password_hash,
-        password_salt
-      )
-      VALUES (
-        :publicId,
-        :userId,
-        :fullName,
-        :email,
-        :universityId,
-        :universityTitle,
-        :course,
-        :groupLabel,
-        :scheduleProfileId,
-        :scheduleProfileType,
-        :scheduleProfileLabel,
-        NULL,
-        NULL
-      );
-    `,
-    {
-      publicId,
-      userId: normalizedUserId,
-      fullName: normalizedFullName,
-      email: fallbackEmail,
-      universityId,
-      universityTitle,
-      course: normalizedCourse,
-      groupLabel: normalizedGroup,
-      ...scheduleParams,
-    },
-  );
-
-  return getAccountByUserId(normalizedUserId);
+  return mapAccountRecord(record);
 };
 
 module.exports = {
