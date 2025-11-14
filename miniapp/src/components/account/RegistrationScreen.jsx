@@ -11,7 +11,7 @@ import {
 
 const MIN_QUERY_LENGTH = 3;
 
-const RegistrationScreen = () => {
+const RegistrationScreen = ({ onSuccess, onCancel }) => {
   const { account, registerAccount, isProcessing, error, userId, maxUser } =
     useAccount();
   const { university } = useUniversity();
@@ -267,8 +267,11 @@ const RegistrationScreen = () => {
 
     try {
       await registerAccount(payload);
-      setSuccessMessage("Данные сохранены и синхронизированы.");
+      setSuccessMessage(
+        account ? "Профиль обновлён." : "Данные сохранены и синхронизированы.",
+      );
       setFieldErrors({});
+      onSuccess?.();
     } catch (submitError) {
       console.error("registration failed", submitError);
       setFieldErrors({
@@ -353,40 +356,12 @@ const RegistrationScreen = () => {
 
   return (
     <form className="account-form" onSubmit={handleSubmit}>
-      <div className="account-form__fieldset">
-        <div className="account-form__field">
-          <label htmlFor="register-max-id">MAX ID</label>
-          <input
-            id="register-max-id"
-            type="text"
-            value={userId || "Не получен"}
-            readOnly
-          />
-          <p className="account-form__hint">
-            Этот идентификатор приходит из MAX и используется вместо логина и
-            пароля.
-          </p>
-          {fieldErrors.userId && (
-            <p className="account-form__error">{fieldErrors.userId}</p>
-          )}
-        </div>
-        <div className="account-form__field">
-          <label htmlFor="register-max-name">Имя в MAX</label>
-          <input
-            id="register-max-name"
-            type="text"
-            value={maxUser?.name || "—"}
-            readOnly
-          />
-          <p className="account-form__hint">
-            Мы подсказали, как вы подписаны в MAX. Ниже вы можете указать
-            предпочтительное ФИО.
-          </p>
-        </div>
-      </div>
+      {fieldErrors.userId && (
+        <p className="account-form__error">{fieldErrors.userId}</p>
+      )}
 
       <div className="account-form__field">
-        <label htmlFor="register-fullName">ФИО</label>
+        <label htmlFor="register-fullName">Имя в MAX (можно указать своё ФИО)</label>
         <input
           id="register-fullName"
           type="text"
@@ -481,6 +456,16 @@ const RegistrationScreen = () => {
               ? "Обновить профиль"
               : "Создать профиль"}
         </button>
+        {account && onCancel && (
+          <button
+            type="button"
+            className="account-form__ghost-button"
+            onClick={onCancel}
+            disabled={isProcessing}
+          >
+            Отменить
+          </button>
+        )}
       </div>
     </form>
   );

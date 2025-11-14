@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAccount } from "../../context/AccountContext.jsx";
 import SettingsIcon from "../../static/settings.svg";
+import AccountProfileCard from "../account/AccountProfileCard.jsx";
 import RegistrationScreen from "../account/RegistrationScreen.jsx";
 
 const SKELETON_ITEMS = Array.from({ length: 1 }, (_, i) => i);
 
 const AccountScreen = ({ onNavigate }) => {
-  const { isInitializing, userId } = useAccount();
+  const { account, isInitializing, userId } = useAccount();
+  const [isManualEdit, setIsManualEdit] = useState(false);
 
   const handleOpenSettings = () => {
     onNavigate?.("settings");
@@ -60,14 +63,45 @@ const AccountScreen = ({ onNavigate }) => {
     if (!userId) {
       return renderMissingUser();
     }
-    return <RegistrationScreen />;
+
+    const shouldShowForm = !account || isManualEdit;
+
+    if (shouldShowForm) {
+      return (
+        <RegistrationScreen
+          onSuccess={() => setIsManualEdit(false)}
+          onCancel={account ? () => setIsManualEdit(false) : undefined}
+        />
+      );
+    }
+
+    return (
+      <AccountProfileCard
+        account={account}
+        onEdit={() => setIsManualEdit(true)}
+      />
+    );
   };
 
   const hasUserSession = Boolean(userId);
-  const eyebrowText = hasUserSession ? "Данные профиля" : "Сессия недоступна";
-  const titleText = hasUserSession ? "Ваши данные" : "Подключите аккаунт MAX";
+  const isEditingView = !account || isManualEdit;
+  const eyebrowText = hasUserSession
+    ? isEditingView
+      ? "Обновление профиля"
+      : "Данные профиля"
+    : "Сессия недоступна";
+  const titleText =
+    !hasUserSession || !account
+      ? hasUserSession
+        ? "Создайте профиль"
+        : "Подключите аккаунт MAX"
+      : isEditingView
+        ? "Обновите данные"
+        : "Ваши данные";
   const subtitleText = hasUserSession
-    ? "MAX автоматически определяет ваш ID. Проверьте свои данные, обновите ФИО и синхронизируйте вуз."
+    ? isEditingView
+      ? "Проверьте ФИО, вуз и группу, чтобы сервисы MAX знали о вас актуальную информацию."
+      : "Здесь отображаются данные, которые вы синхронизировали с MAX."
     : "Чтобы редактировать профиль, откройте мини-приложение через бота MAX. Так мы сможем связать аккаунт с вашим ID.";
 
   return (
@@ -90,7 +124,15 @@ const AccountScreen = ({ onNavigate }) => {
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
-          key={hasUserSession ? "account-form" : isInitializing ? "loading" : "no-session"}
+          key={
+            hasUserSession
+              ? isEditingView
+                ? "account-form"
+                : "account-view"
+              : isInitializing
+                ? "loading"
+                : "no-session"
+          }
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -16 }}

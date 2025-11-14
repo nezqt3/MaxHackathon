@@ -12,7 +12,7 @@ const getInitials = (fullName) => {
     .join("");
 };
 
-const AccountProfileCard = ({ account, onLogout }) => {
+const AccountProfileCard = ({ account, onEdit }) => {
   if (!account) {
     return null;
   }
@@ -28,17 +28,36 @@ const AccountProfileCard = ({ account, onLogout }) => {
         {getInitials(account.fullName)}
       </div>
 
-      <div className="account-card__info">
-        <span className="account-card__info-name">{account.fullName}</span>
-        <span className="account-card__info-email">{account.email}</span>
-        <div className="account-card__tags">
-          <span>{account.universityTitle}</span>
-          <span>{account.course} курс</span>
-          <span>{account.groupLabel}</span>
+      <div className="account-card__body">
+        <div className="account-card__info">
+          <span className="account-card__info-eyebrow">Профиль MAX</span>
+          <span className="account-card__info-name">
+            {account.fullName || "Имя не указано"}
+          </span>
+          <p className="account-card__info-description">
+            Здесь отображаются данные, которые вы синхронизировали с сервисами
+            MAX.
+          </p>
         </div>
+
+        <div className="account-card__meta">
+          <div>
+            <span>Вуз</span>
+            <strong>{account.universityTitle || "Не выбран"}</strong>
+          </div>
+          <div>
+            <span>Курс</span>
+            <strong>{account.course || "—"}</strong>
+          </div>
+          <div>
+            <span>Группа</span>
+            <strong>{account.groupLabel || "—"}</strong>
+          </div>
+        </div>
+
         {account.scheduleProfile && (
           <span className="account-card__badge">
-            Синхронизация с расписанием
+            Синхронизировано с расписанием
           </span>
         )}
       </div>
@@ -47,9 +66,9 @@ const AccountProfileCard = ({ account, onLogout }) => {
         <button
           type="button"
           className="account-card__action"
-          onClick={onLogout}
+          onClick={onEdit}
         >
-          Выйти
+          Изменить данные
         </button>
       </div>
     </motion.div>
