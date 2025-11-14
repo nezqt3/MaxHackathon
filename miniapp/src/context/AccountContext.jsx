@@ -16,6 +16,7 @@ import {
   getScheduleStorageKey,
   persistScheduleProfile,
 } from "../methods/schedule/scheduleUtils";
+import { useUniversity } from "./UniversityContext";
 
 const STORAGE_KEY = "max-miniapp:account-id";
 
@@ -160,6 +161,7 @@ const AccountContext = createContext({
 });
 
 export const AccountProvider = ({ children }) => {
+  const { selectUniversity } = useUniversity();
   const identityRef = useRef(null);
 
   if (identityRef.current === null) {
@@ -233,23 +235,33 @@ export const AccountProvider = ({ children }) => {
   const resolvedUserId = maxUser?.userId || null;
   const contextUserId = resolvedUserId || accountId || null;
 
-  const syncScheduleFromAccount = useCallback(
+  const syncScheduleFromAccount = useCallback((payload) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (!payload?.universityId) {
+      return;
+    }
+    const storageKey = getScheduleStorageKey(payload.universityId);
+    if (!storageKey) {
+      return;
+    }
+    if (payload.scheduleProfile) {
+      persistScheduleProfile(storageKey, payload.scheduleProfile);
+    }
+  }, []);
+
+  const applyAccountSideEffects = useCallback(
     (payload) => {
-      if (typeof window === "undefined") {
+      if (!payload) {
         return;
       }
-      if (!payload?.universityId) {
-        return;
-      }
-      const storageKey = getScheduleStorageKey(payload.universityId);
-      if (!storageKey) {
-        return;
-      }
-      if (payload.scheduleProfile) {
-        persistScheduleProfile(storageKey, payload.scheduleProfile);
+      syncScheduleFromAccount(payload);
+      if (payload.universityId) {
+        selectUniversity(payload.universityId);
       }
     },
-    [],
+    [selectUniversity, syncScheduleFromAccount],
   );
 
   const loadAccount = useCallback(
@@ -272,7 +284,7 @@ export const AccountProvider = ({ children }) => {
           return null;
         }
         setAccount(data);
-        syncScheduleFromAccount(data);
+        applyAccountSideEffects(data);
         return data;
       } catch (fetchError) {
         console.error("Failed to load account", fetchError);
@@ -282,7 +294,7 @@ export const AccountProvider = ({ children }) => {
         setIsInitializing(false);
       }
     },
-    [syncScheduleFromAccount, updateAccountId],
+    [applyAccountSideEffects, updateAccountId],
   );
 
   useEffect(() => {
@@ -302,11 +314,11 @@ export const AccountProvider = ({ children }) => {
     (payload) => {
       setAccount(payload);
       updateAccountId(payload?.id ?? null);
-      syncScheduleFromAccount(payload);
+      applyAccountSideEffects(payload);
       setError("");
       return payload;
     },
-    [syncScheduleFromAccount, updateAccountId],
+    [applyAccountSideEffects, updateAccountId],
   );
 
   const registerAccount = useCallback(
