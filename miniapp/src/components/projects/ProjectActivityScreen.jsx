@@ -209,14 +209,28 @@ const ProjectActivityScreen = ({ account }) => {
   };
 
   const persistProject = async (project) => {
-    if (!project) {
-      return;
+    if (!project?.id) {
+      throw new Error("Нет данных проекта для сохранения");
     }
     try {
-      await updateProjectRequest(project);
+      const savedProject = await updateProjectRequest(project);
+      setProjects((prev) =>
+        prev.map((item) => (item.id === savedProject.id ? savedProject : item)),
+      );
+      setSelectedProject((current) =>
+        current?.id === savedProject.id ? savedProject : current,
+      );
+      setManagingProject((current) =>
+        current?.id === savedProject.id ? savedProject : current,
+      );
+      return savedProject;
     } catch (persistError) {
       console.error("Failed to synchronize project", persistError);
-      setError("Не удалось синхронизировать проект. Попробуйте обновить страницу.");
+      const message =
+        persistError?.message ||
+        "Не удалось синхронизировать проект. Попробуйте обновить страницу.";
+      setError(message);
+      throw persistError;
     }
   };
 
@@ -233,37 +247,67 @@ const ProjectActivityScreen = ({ account }) => {
     setError("");
   };
 
+  const cloneProject = (project) => {
+    if (!project) {
+      return null;
+    }
+    if (typeof structuredClone === "function") {
+      return structuredClone(project);
+    }
+    try {
+      return JSON.parse(JSON.stringify(project));
+    } catch {
+      return null;
+    }
+  };
+
+  const getProjectSnapshot = (projectId) => {
+    if (!projectId) {
+      return null;
+    }
+    const targetProject = projects.find((item) => item.id === projectId);
+    return cloneProject(targetProject);
+  };
+
   const handleJoinProject = async (projectId, roleId) => {
     if (!ensureCurrentUser()) {
       return;
     }
+    const previousSnapshot = getProjectSnapshot(projectId);
+    const updatedProject = updateProjectState(projectId, (project) => {
+      const participants = [
+        ...(Array.isArray(project.participants) ? project.participants : []),
+        { userId: currentUser.id, roleId },
+      ];
+      const roles = (project.roles || []).map((role) =>
+        role.id === roleId
+          ? {
+              ...role,
+              filledCount: Math.min(
+                role.requiredCount,
+                Number(role.filledCount || 0) + 1,
+              ),
+            }
+          : role,
+      );
+      const pendingRequests = (project.pendingRequests || []).map((request) =>
+        request.user?.id === currentUser.id
+          ? { ...request, status: "accepted" }
+          : request,
+      );
+      return { ...project, participants, roles, pendingRequests };
+    });
+    if (!updatedProject) {
+      setError("Проект не найден.");
+      return;
+    }
     try {
-      const updatedProject = updateProjectState(projectId, (project) => {
-        const participants = [
-          ...(Array.isArray(project.participants) ? project.participants : []),
-          { userId: currentUser.id, roleId },
-        ];
-        const roles = (project.roles || []).map((role) =>
-          role.id === roleId
-            ? {
-                ...role,
-                filledCount: Math.min(
-                  role.requiredCount,
-                  Number(role.filledCount || 0) + 1,
-                ),
-              }
-            : role,
-        );
-        const pendingRequests = (project.pendingRequests || []).map((request) =>
-          request.user?.id === currentUser.id
-            ? { ...request, status: "accepted" }
-            : request,
-        );
-        return { ...project, participants, roles, pendingRequests };
-      });
       await persistProject(updatedProject);
       showBanner("Вы присоединились к проекту.");
     } catch {
+      if (previousSnapshot) {
+        updateProjectState(projectId, () => previousSnapshot);
+      }
       setError("Не удалось присоединиться. Попробуйте еще раз.");
     }
   };
@@ -272,30 +316,38 @@ const ProjectActivityScreen = ({ account }) => {
     if (!ensureCurrentUser()) {
       return;
     }
-    try {
-      const updatedProject = updateProjectState(projectId, (project) => {
-        const participants = (project.participants || []).filter(
-          (member) => member.userId !== currentUser.id,
-        );
-        const roles = (project.roles || []).map((role) => {
-          if (
-            (project.participants || []).some(
-              (member) =>
-                member.userId === currentUser.id && member.roleId === role.id,
-            )
-          ) {
-            return {
-              ...role,
-              filledCount: Math.max(0, Number(role.filledCount || 0) - 1),
-            };
-          }
-          return role;
-        });
-        return { ...project, participants, roles };
+    const previousSnapshot = getProjectSnapshot(projectId);
+    const updatedProject = updateProjectState(projectId, (project) => {
+      const participants = (project.participants || []).filter(
+        (member) => member.userId !== currentUser.id,
+      );
+      const roles = (project.roles || []).map((role) => {
+        if (
+          (project.participants || []).some(
+            (member) =>
+              member.userId === currentUser.id && member.roleId === role.id,
+          )
+        ) {
+          return {
+            ...role,
+            filledCount: Math.max(0, Number(role.filledCount || 0) - 1),
+          };
+        }
+        return role;
       });
+      return { ...project, participants, roles };
+    });
+    if (!updatedProject) {
+      setError("Проект не найден.");
+      return;
+    }
+    try {
       await persistProject(updatedProject);
       showBanner("Вы покинули проект.", "neutral");
     } catch {
+      if (previousSnapshot) {
+        updateProjectState(projectId, () => previousSnapshot);
+      }
       setError("Не удалось выйти из проекта.");
     }
   };
@@ -304,80 +356,96 @@ const ProjectActivityScreen = ({ account }) => {
     if (!ensureCurrentUser()) {
       return;
     }
+    const previousSnapshot = getProjectSnapshot(projectId);
+    const updatedProject = updateProjectState(projectId, (project) => ({
+      ...project,
+      pendingRequests: [
+        ...(Array.isArray(project.pendingRequests)
+          ? project.pendingRequests
+          : []),
+        {
+          id: generateId("request"),
+          user: currentUser,
+          roleId,
+          message,
+          status: "pending",
+        },
+      ],
+    }));
+    if (!updatedProject) {
+      setError("Проект не найден.");
+      return;
+    }
     try {
-      const updatedProject = updateProjectState(projectId, (project) => ({
-        ...project,
-        pendingRequests: [
-          ...(Array.isArray(project.pendingRequests)
-            ? project.pendingRequests
-            : []),
-          {
-            id: generateId("request"),
-            user: currentUser,
-            roleId,
-            message,
-            status: "pending",
-          },
-        ],
-      }));
       await persistProject(updatedProject);
       showBanner("Заявка отправлена лидеру.");
     } catch {
+      if (previousSnapshot) {
+        updateProjectState(projectId, () => previousSnapshot);
+      }
       setError("Не удалось отправить заявку. Попробуйте еще раз.");
     }
   };
 
   const handleRespondRequest = async (projectId, requestId, status) => {
-    try {
-      const updatedProject = updateProjectState(projectId, (project) => {
-        const pendingRequests = Array.isArray(project.pendingRequests)
-          ? project.pendingRequests
-          : [];
-        const request = pendingRequests.find((item) => item.id === requestId);
-        if (!request) {
-          return project;
-        }
-        let nextParticipants = project.participants || [];
-        let nextRoles = project.roles || [];
+    const previousSnapshot = getProjectSnapshot(projectId);
+    const updatedProject = updateProjectState(projectId, (project) => {
+      const pendingRequests = Array.isArray(project.pendingRequests)
+        ? project.pendingRequests
+        : [];
+      const request = pendingRequests.find((item) => item.id === requestId);
+      if (!request) {
+        return project;
+      }
+      let nextParticipants = project.participants || [];
+      let nextRoles = project.roles || [];
 
-        if (status === "accepted") {
-          const exists = nextParticipants.some(
-            (participant) => participant.userId === request.user?.id,
+      if (status === "accepted") {
+        const exists = nextParticipants.some(
+          (participant) => participant.userId === request.user?.id,
+        );
+        if (!exists) {
+          nextParticipants = [
+            ...nextParticipants,
+            { userId: request.user?.id, roleId: request.roleId },
+          ];
+          nextRoles = nextRoles.map((role) =>
+            role.id === request.roleId
+              ? {
+                  ...role,
+                  filledCount: Math.min(
+                    role.requiredCount,
+                    Number(role.filledCount || 0) + 1,
+                  ),
+                }
+              : role,
           );
-          if (!exists) {
-            nextParticipants = [
-              ...nextParticipants,
-              { userId: request.user?.id, roleId: request.roleId },
-            ];
-            nextRoles = nextRoles.map((role) =>
-              role.id === request.roleId
-                ? {
-                    ...role,
-                    filledCount: Math.min(
-                      role.requiredCount,
-                      Number(role.filledCount || 0) + 1,
-                    ),
-                  }
-                : role,
-            );
-          }
         }
+      }
 
-        return {
-          ...project,
-          participants: nextParticipants,
-          roles: nextRoles,
-          pendingRequests: pendingRequests.map((item) =>
-            item.id === requestId ? { ...item, status } : item,
-          ),
-        };
-      });
+      return {
+        ...project,
+        participants: nextParticipants,
+        roles: nextRoles,
+        pendingRequests: pendingRequests.map((item) =>
+          item.id === requestId ? { ...item, status } : item,
+        ),
+      };
+    });
+    if (!updatedProject) {
+      setError("Проект не найден.");
+      return;
+    }
+    try {
       await persistProject(updatedProject);
       showBanner(
         status === "accepted" ? "Заявка одобрена." : "Заявка отклонена.",
         status === "accepted" ? "success" : "neutral",
       );
     } catch {
+      if (previousSnapshot) {
+        updateProjectState(projectId, () => previousSnapshot);
+      }
       setError("Не удалось обновить заявку.");
     }
   };
@@ -429,6 +497,7 @@ const ProjectActivityScreen = ({ account }) => {
     payload.leaderRoleId = leaderRoleExists ? formValues.leaderRoleId : "";
 
     if (projectId) {
+      const previousSnapshot = getProjectSnapshot(projectId);
       const updatedProject = updateProjectState(projectId, (project) => {
         const preservedParticipants = (project.participants || []).filter(
           (member) => member.userId !== currentUser.id,
@@ -459,7 +528,20 @@ const ProjectActivityScreen = ({ account }) => {
           ),
         };
       });
-      await updateProjectRequest(updatedProject);
+      if (!updatedProject) {
+        throw new Error("Проект не найден");
+      }
+      try {
+        await persistProject(updatedProject);
+      } catch (persistError) {
+        if (previousSnapshot) {
+          updateProjectState(projectId, () => previousSnapshot);
+        }
+        throw new Error(
+          persistError?.message ||
+            "Не удалось обновить проект. Попробуйте еще раз.",
+        );
+      }
       showBanner("Проект обновлен.");
       return;
     }
