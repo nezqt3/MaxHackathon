@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = "http://https://max-hackathon-c3tg.vercel.app/";
+const DEFAULT_API_URL = "https://max-hackathon-c3tg.vercel.app/";
 
 export const API_BASE_URL =
   (typeof import.meta !== "undefined" &&
