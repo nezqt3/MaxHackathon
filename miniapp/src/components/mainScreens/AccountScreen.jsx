@@ -1,16 +1,12 @@
-import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAccount } from "../../context/AccountContext.jsx";
 import SettingsIcon from "../../static/settings.svg";
-import AccountProfileCard from "../account/AccountProfileCard.jsx";
-import LoginScreen from "../account/LoginScreen.jsx";
 import RegistrationScreen from "../account/RegistrationScreen.jsx";
 
 const SKELETON_ITEMS = Array.from({ length: 1 }, (_, i) => i);
 
 const AccountScreen = ({ onNavigate }) => {
-  const { account, isInitializing, logout } = useAccount();
-  const [authMode, setAuthMode] = useState("login");
+  const { isInitializing, userId } = useAccount();
 
   const handleOpenSettings = () => {
     onNavigate?.("settings");
@@ -33,14 +29,26 @@ const AccountScreen = ({ onNavigate }) => {
     </div>
   );
 
-  const renderAuth = () => (
-    <div className="account-auth">
+  const renderMissingUser = () => (
+    <div className="account-auth account-auth--info">
       <div className="account-auth__body">
-        {authMode === "login" ? (
-          <LoginScreen onSwitch={() => setAuthMode("register")} />
-        ) : (
-          <RegistrationScreen onSwitch={() => setAuthMode("login")} />
-        )}
+        <h3>Нет подключения к MAX</h3>
+        <p>
+          Профиль открывается автоматически, когда вы запускаете мини-приложение
+          из чат-бота MAX. Вернитесь в чат и нажмите кнопку «Открыть приложение»,
+          чтобы мы смогли определить ваш ID.
+        </p>
+        <button
+          type="button"
+          className="account-form__link"
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              window.location.reload();
+            }
+          }}
+        >
+          Попробовать снова
+        </button>
       </div>
     </div>
   );
@@ -49,29 +57,26 @@ const AccountScreen = ({ onNavigate }) => {
     if (isInitializing) {
       return renderSkeleton();
     }
-    if (account) {
-      return (
-        <AccountProfileCard account={account} onLogout={logout} />
-      );
+    if (!userId) {
+      return renderMissingUser();
     }
-    return renderAuth();
+    return <RegistrationScreen />;
   };
+
+  const hasUserSession = Boolean(userId);
+  const eyebrowText = hasUserSession ? "Данные профиля" : "Сессия недоступна";
+  const titleText = hasUserSession ? "Ваши данные" : "Подключите аккаунт MAX";
+  const subtitleText = hasUserSession
+    ? "MAX автоматически определяет ваш ID. Проверьте свои данные, обновите ФИО и синхронизируйте вуз."
+    : "Чтобы редактировать профиль, откройте мини-приложение через бота MAX. Так мы сможем связать аккаунт с вашим ID.";
 
   return (
     <section className="screen account-screen">
       <header className="account-screen__header">
         <div className="account-screen__header-content">
-          <p className="account-screen__eyebrow">
-            {account ? "Профиль" : "Создайте аккаунт"}
-          </p>
-          <h2 className="account-screen__title">
-            {account ? "Ваши данные" : "Личный кабинет"}
-          </h2>
-          <p className="account-screen__subtitle">
-            {account
-              ? "Здесь хранится краткая информация о вашем аккаунте."
-              : "Сохраните ФИО, вуз и группу, чтобы быстрее пользоваться сервисами."}
-          </p>
+          <p className="account-screen__eyebrow">{eyebrowText}</p>
+          <h2 className="account-screen__title">{titleText}</h2>
+          <p className="account-screen__subtitle">{subtitleText}</p>
         </div>
         <button
           type="button"
@@ -85,7 +90,7 @@ const AccountScreen = ({ onNavigate }) => {
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
-          key={account ? "account-view" : isInitializing ? "loading" : authMode}
+          key={hasUserSession ? "account-form" : isInitializing ? "loading" : "no-session"}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -16 }}

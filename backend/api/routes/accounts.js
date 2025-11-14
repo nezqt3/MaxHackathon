@@ -1,21 +1,11 @@
 const express = require("express");
-const {
-  saveAccount,
-  getAccountByEmail,
-  getAccountByPublicId,
-  getAccountAuthByEmail,
-  verifyPassword,
-} = require("../storage/accountsStore");
+const { saveAccount, getAccountByPublicId } = require("../storage/accountsStore");
 const {
   DEFAULT_UNIVERSITY_ID,
   getUniversityById,
 } = require("../universities");
 
 const router = express.Router();
-
-const isValidEmail = (value) =>
-  typeof value === "string" &&
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim().toLowerCase());
 
 const normalizeCourse = (value) => {
   const number = Number(String(value).replace(/[^\d]/g, ""));
@@ -52,17 +42,14 @@ const sanitizeScheduleProfile = (profile) => {
   };
 };
 
-const MIN_PASSWORD_LENGTH = 6;
-
 router.post("/register", (req, res) => {
   const {
+    userId,
     fullName,
-    email,
     course,
     groupLabel,
     universityId,
     scheduleProfile,
-    password,
   } = req.body || {};
 
   const resolvedUniversity = resolveUniversity(universityId);
@@ -70,11 +57,12 @@ router.post("/register", (req, res) => {
     return res.status(400).json({ error: "Не выбран вуз" });
   }
 
+  if (!userId) {
+    return res.status(400).json({ error: "MAX ID не передан" });
+  }
+
   if (!fullName || String(fullName).trim().length < 5) {
     return res.status(400).json({ error: "Укажите полное ФИО" });
-  }
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ error: "Некорректная почта" });
   }
 
   const normalizedCourse = normalizeCourse(course);
@@ -88,21 +76,14 @@ router.post("/register", (req, res) => {
     return res.status(400).json({ error: "Укажите вашу группу" });
   }
 
-  if (!password || String(password).length < MIN_PASSWORD_LENGTH) {
-    return res
-      .status(400)
-      .json({ error: `Пароль должен быть не короче ${MIN_PASSWORD_LENGTH} символов` });
-  }
-
   const prepared = {
+    userId: String(userId),
     fullName,
-    email,
     course: String(normalizedCourse),
     groupLabel,
     universityId: resolvedUniversity.id,
     universityTitle: resolvedUniversity.title,
     scheduleProfile: sanitizeScheduleProfile(scheduleProfile),
-    password: String(password),
   };
 
   try {
@@ -111,36 +92,6 @@ router.post("/register", (req, res) => {
   } catch (error) {
     console.error("Register account failed", error);
     return res.status(500).json({ error: "Не удалось создать аккаунт" });
-  }
-});
-
-router.post("/login", (req, res) => {
-  const { email, password } = req.body || {};
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ error: "Введите корректную почту" });
-  }
-  if (!password) {
-    return res.status(400).json({ error: "Введите пароль" });
-  }
-  try {
-    const authData = getAccountAuthByEmail(email.toLowerCase());
-    if (!authData?.account) {
-      return res
-        .status(404)
-        .json({ error: "Аккаунт не найден. Попробуйте зарегистрироваться." });
-    }
-    const isPasswordValid = verifyPassword(
-      password,
-      authData.passwordHash,
-      authData.passwordSalt,
-    );
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Неверный пароль" });
-    }
-    return res.json(authData.account);
-  } catch (error) {
-    console.error("Login failed", error);
-    return res.status(500).json({ error: "Не удалось авторизоваться" });
   }
 });
 

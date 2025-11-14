@@ -9,12 +9,11 @@ import {
   SCHEDULE_PROFILE_EVENT,
 } from "../../methods/schedule/scheduleUtils";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_QUERY_LENGTH = 3;
-const MIN_PASSWORD_LENGTH = 6;
 
-const RegistrationScreen = ({ onSwitch }) => {
-  const { registerAccount, isProcessing, error } = useAccount();
+const RegistrationScreen = () => {
+  const { account, registerAccount, isProcessing, error, userId, maxUser } =
+    useAccount();
   const { university } = useUniversity();
   const universityId = university?.apiId || university?.id || null;
   const universityTitle = university?.title || "Вуз не выбран";
@@ -22,13 +21,16 @@ const RegistrationScreen = ({ onSwitch }) => {
     () => getScheduleStorageKey(universityId),
     [universityId],
   );
-  const initialProfile = useMemo(
+  const storedProfile = useMemo(
     () => readStoredScheduleProfile(storageKey),
     [storageKey],
   );
+  const initialProfile = useMemo(
+    () => account?.scheduleProfile || storedProfile,
+    [account?.scheduleProfile, storedProfile],
+  );
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [course, setCourse] = useState("");
   const [manualGroup, setManualGroup] = useState("");
   const [groupMode, setGroupMode] = useState(
@@ -41,13 +43,42 @@ const RegistrationScreen = ({ onSwitch }) => {
   const [searchError, setSearchError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     setSelectedProfile(initialProfile);
-    setGroupMode(initialProfile ? "schedule" : "manual");
+    if (initialProfile) {
+      setGroupMode("schedule");
+    }
   }, [initialProfile]);
+
+  useEffect(() => {
+    if (account?.fullName && account.fullName !== fullName) {
+      setFullName(account.fullName);
+      return;
+    }
+    if (!account?.fullName && !fullName && maxUser?.name) {
+      setFullName(maxUser.name);
+    }
+  }, [account, fullName, maxUser]);
+
+  useEffect(() => {
+    if (account?.course && String(account.course) !== course) {
+      setCourse(String(account.course));
+    }
+  }, [account, course]);
+
+  useEffect(() => {
+    if (
+      !initialProfile &&
+      account?.groupLabel &&
+      account.groupLabel !== manualGroup
+    ) {
+      setManualGroup(account.groupLabel);
+      setGroupSearch(account.groupLabel);
+      setGroupMode("manual");
+    }
+  }, [account, initialProfile, manualGroup]);
+
 
   useEffect(() => {
     if (typeof window === "undefined" || !storageKey) {
@@ -180,12 +211,12 @@ const RegistrationScreen = ({ onSwitch }) => {
 
   const validateForm = () => {
     const errors = {};
+    if (!userId) {
+      errors.userId =
+        "Не удалось определить MAX ID. Запустите приложение из бота.";
+    }
     if (!fullName || fullName.trim().split(" ").length < 2) {
       errors.fullName = "Введите ФИО полностью";
-    }
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!EMAIL_REGEX.test(normalizedEmail)) {
-      errors.email = "Некорректная почта";
     }
 
     const courseNumber = normalizeCourse(course);
@@ -205,33 +236,24 @@ const RegistrationScreen = ({ onSwitch }) => {
       errors.group = "Укажите группу";
     }
 
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      errors.password = `Пароль должен быть не короче ${MIN_PASSWORD_LENGTH} символов`;
-    }
-    if (confirmPassword !== password) {
-      errors.confirmPassword = "Пароли не совпадают";
-    }
-
     setFieldErrors(errors);
     return {
       errors,
       isValid: Object.keys(errors).length === 0,
       courseNumber,
-      normalizedEmail,
     };
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSuccessMessage("");
-    const { errors, isValid, courseNumber, normalizedEmail } = validateForm();
+    const { errors, isValid, courseNumber } = validateForm();
     if (!isValid) {
       return;
     }
 
     const payload = {
       fullName: fullName.trim(),
-      email: normalizedEmail,
       course: String(courseNumber),
       groupLabel:
         groupMode === "schedule"
@@ -241,20 +263,17 @@ const RegistrationScreen = ({ onSwitch }) => {
       universityTitle,
       scheduleProfile:
         groupMode === "schedule" && selectedProfile ? selectedProfile : null,
-      password: password,
     };
 
     try {
       await registerAccount(payload);
-      setSuccessMessage("Аккаунт создан. Мы синхронизировали данные.");
+      setSuccessMessage("Данные сохранены и синхронизированы.");
       setFieldErrors({});
-      setPassword("");
-      setConfirmPassword("");
     } catch (submitError) {
       console.error("registration failed", submitError);
       setFieldErrors({
         ...errors,
-        submit: submitError?.message || "Не удалось создать аккаунт",
+        submit: submitError?.message || "Не удалось сохранить данные",
       });
     }
   };
@@ -334,6 +353,38 @@ const RegistrationScreen = ({ onSwitch }) => {
 
   return (
     <form className="account-form" onSubmit={handleSubmit}>
+      <div className="account-form__fieldset">
+        <div className="account-form__field">
+          <label htmlFor="register-max-id">MAX ID</label>
+          <input
+            id="register-max-id"
+            type="text"
+            value={userId || "Не получен"}
+            readOnly
+          />
+          <p className="account-form__hint">
+            Этот идентификатор приходит из MAX и используется вместо логина и
+            пароля.
+          </p>
+          {fieldErrors.userId && (
+            <p className="account-form__error">{fieldErrors.userId}</p>
+          )}
+        </div>
+        <div className="account-form__field">
+          <label htmlFor="register-max-name">Имя в MAX</label>
+          <input
+            id="register-max-name"
+            type="text"
+            value={maxUser?.name || "—"}
+            readOnly
+          />
+          <p className="account-form__hint">
+            Мы подсказали, как вы подписаны в MAX. Ниже вы можете указать
+            предпочтительное ФИО.
+          </p>
+        </div>
+      </div>
+
       <div className="account-form__field">
         <label htmlFor="register-fullName">ФИО</label>
         <input
@@ -346,21 +397,6 @@ const RegistrationScreen = ({ onSwitch }) => {
         />
         {fieldErrors.fullName && (
           <p className="account-form__error">{fieldErrors.fullName}</p>
-        )}
-      </div>
-
-      <div className="account-form__field">
-        <label htmlFor="register-email">Почта</label>
-        <input
-          id="register-email"
-          type="email"
-          placeholder="student@example.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          disabled={isProcessing}
-        />
-        {fieldErrors.email && (
-          <p className="account-form__error">{fieldErrors.email}</p>
         )}
       </div>
 
@@ -392,37 +428,6 @@ const RegistrationScreen = ({ onSwitch }) => {
           />
           {fieldErrors.course && (
             <p className="account-form__error">{fieldErrors.course}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="account-form__fieldset">
-        <div className="account-form__field">
-          <label htmlFor="register-password">Пароль</label>
-          <input
-            id="register-password"
-            type="password"
-            placeholder="Минимум 6 символов"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            disabled={isProcessing}
-          />
-          {fieldErrors.password && (
-            <p className="account-form__error">{fieldErrors.password}</p>
-          )}
-        </div>
-        <div className="account-form__field">
-          <label htmlFor="register-password-confirm">Повторите пароль</label>
-          <input
-            id="register-password-confirm"
-            type="password"
-            placeholder="Введите пароль ещё раз"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            disabled={isProcessing}
-          />
-          {fieldErrors.confirmPassword && (
-            <p className="account-form__error">{fieldErrors.confirmPassword}</p>
           )}
         </div>
       </div>
@@ -466,15 +471,15 @@ const RegistrationScreen = ({ onSwitch }) => {
       )}
 
       <div className="account-form__actions">
-        <button type="submit" disabled={isProcessing || !universityId}>
-          {isProcessing ? "Создание..." : "Зарегистрироваться"}
-        </button>
         <button
-          type="button"
-          className="account-form__link"
-          onClick={onSwitch}
+          type="submit"
+          disabled={isProcessing || !universityId || !userId}
         >
-          Уже есть аккаунт? Войти
+          {isProcessing
+            ? "Сохранение..."
+            : account
+              ? "Обновить профиль"
+              : "Создать профиль"}
         </button>
       </div>
     </form>

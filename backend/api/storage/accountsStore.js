@@ -1,9 +1,3 @@
-const {
-  randomUUID,
-  randomBytes,
-  scryptSync,
-  timingSafeEqual,
-} = require("node:crypto");
 const { execute, query } = require("./sqliteClient");
 
 let isInitialized = false;
@@ -18,6 +12,7 @@ const ensureSchema = () => {
     CREATE TABLE IF NOT EXISTS accounts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       public_id TEXT NOT NULL UNIQUE,
+      max_user_id TEXT UNIQUE,
       full_name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       university_id TEXT NOT NULL,
@@ -47,6 +42,12 @@ const ensureSchema = () => {
   if (!columnNames.has("password_salt")) {
     execute(`ALTER TABLE accounts ADD COLUMN password_salt TEXT;`);
   }
+  if (!columnNames.has("max_user_id")) {
+    execute(`ALTER TABLE accounts ADD COLUMN max_user_id TEXT;`);
+  }
+  execute(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(max_user_id);`,
+  );
 
   isInitialized = true;
 };
@@ -64,8 +65,11 @@ const mapRow = (row) => {
       }
     : null;
 
+  const userId = row.max_user_id || row.public_id;
+
   return {
-    id: row.public_id,
+    id: userId,
+    userId,
     fullName: row.full_name,
     email: row.email,
     universityId: row.university_id,
@@ -78,61 +82,22 @@ const mapRow = (row) => {
   };
 };
 
-const createPasswordRecord = (password) => {
-  const normalized = String(password || "");
-  if (normalized.length < 1) {
-    throw new Error("Password is required");
-  }
-  const salt = randomBytes(16).toString("hex");
-  const hash = scryptSync(normalized, salt, 64);
-  return {
-    salt,
-    hash: hash.toString("hex"),
-  };
-};
-
-const verifyPassword = (password, hash, salt) => {
-  if (
-    !password ||
-    !hash ||
-    !salt ||
-    typeof hash !== "string" ||
-    typeof salt !== "string"
-  ) {
-    return false;
-  }
-  try {
-    const hashBuffer = Buffer.from(hash, "hex");
-    const candidate = scryptSync(String(password), salt, hashBuffer.length);
-    return (
-      hashBuffer.length === candidate.length &&
-      timingSafeEqual(hashBuffer, candidate)
-    );
-  } catch (error) {
-    console.error("Password verification failed", error);
-    return false;
-  }
-};
-
-const getAccountByEmail = (email) => {
-  ensureSchema();
-  if (!email) {
-    return null;
-  }
-  const rows = query(
-    `SELECT * FROM accounts WHERE email = :email LIMIT 1;`,
-    {
-      email: email.toLowerCase(),
-    },
-  );
-  return mapRow(rows[0]);
-};
-
 const getAccountByPublicId = (publicId) => {
   ensureSchema();
   if (!publicId) {
     return null;
   }
+
+  const rowByUserId = query(
+    `SELECT * FROM accounts WHERE max_user_id = :publicId LIMIT 1;`,
+    {
+      publicId,
+    },
+  );
+  if (rowByUserId[0]) {
+    return mapRow(rowByUserId[0]);
+  }
+
   const rows = query(
     `SELECT * FROM accounts WHERE public_id = :publicId LIMIT 1;`,
     {
@@ -142,26 +107,18 @@ const getAccountByPublicId = (publicId) => {
   return mapRow(rows[0]);
 };
 
-const getAccountAuthByEmail = (email) => {
+const getAccountByUserId = (userId) => {
   ensureSchema();
-  if (!email) {
+  if (!userId) {
     return null;
   }
   const rows = query(
-    `SELECT * FROM accounts WHERE email = :email LIMIT 1;`,
+    `SELECT * FROM accounts WHERE max_user_id = :userId LIMIT 1;`,
     {
-      email: email.toLowerCase(),
+      userId: String(userId),
     },
   );
-  const row = rows[0];
-  if (!row) {
-    return null;
-  }
-  return {
-    account: mapRow(row),
-    passwordHash: row.password_hash || null,
-    passwordSalt: row.password_salt || null,
-  };
+  return mapRow(rows[0]);
 };
 
 const prepareScheduleParams = (scheduleProfile) => {
@@ -182,25 +139,30 @@ const prepareScheduleParams = (scheduleProfile) => {
 const saveAccount = (payload) => {
   ensureSchema();
   const {
+    userId,
     fullName,
-    email,
     course,
     groupLabel,
     universityId,
     universityTitle,
     scheduleProfile,
-    password,
   } = payload;
 
-  const normalizedEmail = String(email).toLowerCase();
+  if (!userId) {
+    throw new Error("userId is required to save an account");
+  }
+
+  const normalizedUserId = String(userId);
   const normalizedFullName = String(fullName).trim();
   const normalizedGroup = String(groupLabel).trim();
   const normalizedCourse = String(course ?? "").trim();
-  const passwordRecord = createPasswordRecord(password);
+  const fallbackEmail = `${normalizedUserId}@max-user.local`;
 
   const scheduleParams = prepareScheduleParams(scheduleProfile);
 
-  const existing = getAccountByEmail(normalizedEmail);
+  const existing =
+    getAccountByUserId(normalizedUserId) ||
+    getAccountByPublicId(normalizedUserId);
   if (existing) {
     execute(
       `
@@ -214,32 +176,35 @@ const saveAccount = (payload) => {
           schedule_profile_id = :scheduleProfileId,
           schedule_profile_type = :scheduleProfileType,
           schedule_profile_label = :scheduleProfileLabel,
-          password_hash = :passwordHash,
-          password_salt = :passwordSalt,
+          email = :email,
+          max_user_id = :userId,
+          password_hash = NULL,
+          password_salt = NULL,
           updated_at = datetime('now')
-        WHERE public_id = :publicId;
+        WHERE public_id = :publicId OR max_user_id = :userId;
       `,
       {
         publicId: existing.id,
+        userId: normalizedUserId,
+        email: fallbackEmail,
         fullName: normalizedFullName,
         course: normalizedCourse,
         groupLabel: normalizedGroup,
         universityId,
         universityTitle,
-        passwordHash: passwordRecord.hash,
-        passwordSalt: passwordRecord.salt,
         ...scheduleParams,
       },
     );
-    return getAccountByPublicId(existing.id);
+    return getAccountByUserId(normalizedUserId);
   }
 
-  const publicId = randomUUID();
+  const publicId = normalizedUserId;
 
   execute(
     `
       INSERT INTO accounts (
         public_id,
+        max_user_id,
         full_name,
         email,
         university_id,
@@ -254,6 +219,7 @@ const saveAccount = (payload) => {
       )
       VALUES (
         :publicId,
+        :userId,
         :fullName,
         :email,
         :universityId,
@@ -263,31 +229,28 @@ const saveAccount = (payload) => {
         :scheduleProfileId,
         :scheduleProfileType,
         :scheduleProfileLabel,
-        :passwordHash,
-        :passwordSalt
+        NULL,
+        NULL
       );
     `,
     {
       publicId,
+      userId: normalizedUserId,
       fullName: normalizedFullName,
-      email: normalizedEmail,
+      email: fallbackEmail,
       universityId,
       universityTitle,
       course: normalizedCourse,
       groupLabel: normalizedGroup,
-      passwordHash: passwordRecord.hash,
-      passwordSalt: passwordRecord.salt,
       ...scheduleParams,
     },
   );
 
-  return getAccountByPublicId(publicId);
+  return getAccountByUserId(normalizedUserId);
 };
 
 module.exports = {
   saveAccount,
-  getAccountByEmail,
   getAccountByPublicId,
-  getAccountAuthByEmail,
-  verifyPassword,
+  getAccountByUserId,
 };

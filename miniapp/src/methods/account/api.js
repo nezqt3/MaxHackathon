@@ -25,17 +25,6 @@ export const registerAccountRequest = async (data) => {
   return handleResponse(response);
 };
 
-export const loginAccountRequest = async (payload) => {
-  const response = await fetch(`${API_BASE_URL}/api/accounts/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  return handleResponse(response);
-};
-
 export const fetchAccountRequest = async (accountId) => {
   const response = await fetch(`${API_BASE_URL}/api/accounts/${accountId}`);
   return handleResponse(response);
